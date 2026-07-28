@@ -6,27 +6,41 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    container:
-      image: node:24-bookworm
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+      - uses: actions/setup-dotnet@v4
+        if: runner.os == 'Windows'
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build Windows native client
+        if: runner.os == 'Windows'
+        run: dotnet build clients/windows/PraxisControl.Windows/PraxisControl.Windows.csproj -c Release -p:Platform=x64
 
   linux-gui-smoke:
     runs-on: ubuntu-latest
-    container:
-      image: node:24-bookworm
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
       - run: npm ci
       - run: npm run build
       - run: npm run test:linux-client
       - name: Install GTK runtime for headless smoke test
-        run: apt-get update && apt-get install -y --no-install-recommends gjs gir1.2-adw-1 gir1.2-gtk-4.0 gir1.2-soup-3.0 xvfb xauth dbus-x11 python3-pyatspi imagemagick fonts-noto-cjk meson ninja-build desktop-file-utils
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gjs gir1.2-adw-1 gir1.2-gtk-4.0 gir1.2-soup-3.0 xvfb xauth dbus-x11 python3-pyatspi imagemagick fonts-noto-cjk meson ninja-build desktop-file-utils
       - name: Launch GTK shell under Xvfb
         run: npm run test:linux-gui-connected
       - name: Connect GTK shell to a real PGlite service
@@ -38,8 +52,6 @@ jobs:
 
   postgres-contract:
     runs-on: ubuntu-latest
-    container:
-      image: node:24-bookworm
     services:
       postgres:
         image: postgres:16
@@ -47,14 +59,20 @@ jobs:
           POSTGRES_USER: praxis_test
           POSTGRES_PASSWORD: praxis_test_password
           POSTGRES_DB: praxis_test
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U praxis_test -d praxis_test"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 12
     env:
-      POSTGRES_TEST_URL: postgresql://praxis_test:praxis_test_password@postgres:5432/praxis_test
+      POSTGRES_TEST_URL: postgresql://praxis_test:praxis_test_password@127.0.0.1:5432/praxis_test
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
       - run: npm ci
       - run: npm run test:postgres
