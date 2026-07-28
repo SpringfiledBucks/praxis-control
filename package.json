@@ -13,6 +13,7 @@
     "test:linux-client": "node --test clients/linux/tests/core.test.mjs && node --check clients/linux/src/app.mjs && node --check clients/linux/tests/connected-smoke.mjs && node --check clients/linux/tests/real-service-smoke.mjs",
     "test:linux-gui-connected": "node clients/linux/tests/connected-smoke.mjs",
     "test:linux-gui-real-service": "node clients/linux/tests/real-service-smoke.mjs",
+    "test:linux-gui-accessibility": "python3 clients/linux/tests/accessibility-smoke.py",
     "test:postgres": "vitest run src/infrastructure/postgres.integration.test.ts",
     "test:watch": "vitest",
     "migrate": "tsx src/cli/migrate.ts",

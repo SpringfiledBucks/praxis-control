@@ -33,11 +33,13 @@ jobs:
       - run: npm run build
       - run: npm run test:linux-client
       - name: Install GTK runtime for headless smoke test
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gjs gir1.2-adw-1 gir1.2-gtk-4.0 gir1.2-soup-3.0 xvfb xauth dbus-x11
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gjs gir1.2-adw-1 gir1.2-gtk-4.0 gir1.2-soup-3.0 xvfb xauth dbus-x11 python3-pyatspi imagemagick
       - name: Launch GTK shell under Xvfb
         run: npm run test:linux-gui-connected
       - name: Connect GTK shell to a real PGlite service
         run: npm run test:linux-gui-real-service
+      - name: Verify GTK accessibility tree and screenshot
+        run: xvfb-run -a dbus-run-session -- npm run test:linux-gui-accessibility
 
   postgres-contract:
     runs-on: ubuntu-latest
