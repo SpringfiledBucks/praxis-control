@@ -1,8 +1,8 @@
 # Praxis Control 当前交接基线
 
-状态：轻量版 MVP、Windows 原生壳和安全迁移链已验证；Linux GUI、远端与全量 PostgreSQL 等待隔离环境验收
+状态：轻量版 MVP、Windows 原生壳、Linux GUI、安全迁移链及 Gitea CI 已验证；GitHub 镜像和全量 PostgreSQL 生产接入待完成
 
-更新：2026-07-28
+更新：2026-07-29
 
 ## 权威顺序
 
@@ -50,10 +50,10 @@
 
 ## 当前外部状态
 
-- 2026-07-28 已只读确认 NAS、Gitea Web/API 和 Git SSH 恢复；
-- 目标仓库 `<GITEA_OWNER>/praxis-control` 尚不存在，本地没有 `origin`；
-- GitHub 已连接的所有者为 `SpringfiledBucks`，尚无 `praxis-control` 仓库；Gitea/GitHub 建仓和镜像凭据等待用户在对应 UI 完成，见 `docs/status/2026-07-28-git-remote-readiness.md`；
+- NAS Gitea 私有仓库 `<GITEA_OWNER>/praxis-control` 已建立，本地唯一 `origin` 指向 Gitea，`main` 已推送；
+- Gitea Actions run 64 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，见 `docs/status/2026-07-29-gitea-ci.md`；
+- GitHub 所有者为 `SpringfiledBucks`，但尚无 `praxis-control` 仓库；当前连接器不能建仓且应用内浏览器未登录，Gitea 到 GitHub 的推送镜像待一次性 UI 配置，见 `docs/status/2026-07-28-git-remote-readiness.md`；
 - NAS 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
 - Windows 轻量版已验证；Linux GTK 已在 NAS 一次性环境通过真实 PGlite 服务、原生按钮动作、AT-SPI、中文截图和 Meson 安装后启动验收，当前 MVP 范围为 VERIFIED，见 `docs/status/2026-07-28-linux-gui.md`；
 - Windows WinUI 3 原生壳已在 Win11 实机通过在线、离线、刷新和安全关闭验收；原生日常决策窗口已实现并通过构建，端到端表单保存仍待无输入冲突时复验；
-- NAS PostgreSQL 当前对 LAN 与 Tailscale 暴露 5432，全量版生产接入保持 BLOCKED；安全迁移导入已在无卷、回环绑定的一次性 PostgreSQL 16 中通过真实合同验收，Gitea CI 的重复执行仍等待 runner，见 `docs/status/2026-07-28-full-profile-readiness.md`。
+- NAS PostgreSQL 当前对 LAN 与 Tailscale 暴露 5432，全量版生产接入保持 BLOCKED；安全迁移导入已在无卷、回环绑定的一次性 PostgreSQL 16 及 Gitea CI 的一次性 service 中通过真实合同验收，见 `docs/status/2026-07-28-full-profile-readiness.md`。
