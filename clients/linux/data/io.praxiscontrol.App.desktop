@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Praxis Control
+Name[zh_CN]=实践控制台
+Comment=Local-first practice and decision console
+Comment[zh_CN]=本地优先的实践与决策控制台
+Exec=praxis-control-linux
+Icon=io.praxiscontrol.App
+Terminal=false
+Categories=Utility;Office;
+StartupNotify=true
