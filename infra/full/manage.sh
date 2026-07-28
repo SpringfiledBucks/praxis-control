@@ -16,8 +16,12 @@ state_dir="$script_dir/.state/$stack_prefix"
 runtime_secret_dir="$state_dir/runtime-secrets"
 source_admin_secret=${PRAXIS_DB_ADMIN_PASSWORD_FILE:-"$script_dir/secrets/database-admin-password.txt"}
 source_application_secret=${PRAXIS_DB_PASSWORD_FILE:-"$script_dir/secrets/database-app-password.txt"}
+source_access_password=${PRAXIS_ACCESS_PASSWORD_FILE:-"$script_dir/secrets/access-password.txt"}
+source_session_secret=${PRAXIS_SESSION_SECRET_FILE:-"$script_dir/secrets/session-secret.txt"}
 runtime_admin_secret="$runtime_secret_dir/database-admin-password.txt"
 runtime_application_secret="$runtime_secret_dir/database-app-password.txt"
+runtime_access_password="$runtime_secret_dir/access-password.txt"
+runtime_session_secret="$runtime_secret_dir/session-secret.txt"
 label_key='io.praxiscontrol.stack'
 credential_fingerprint_preexisting=false
 [ -f "$state_dir/credential.sha256" ] && credential_fingerprint_preexisting=true
@@ -28,6 +32,8 @@ config_value() {
   awk -F= -v key="$key" '$1 == key { sub(/^[^=]*=/, ""); sub(/\r$/, ""); print; exit }' "$config_file"
 }
 
+access_mode=${ACCESS_MODE:-$(config_value ACCESS_MODE)}
+access_mode=${access_mode:-password}
 allowed_user=${TAILSCALE_ALLOWED_USER:-$(config_value TAILSCALE_ALLOWED_USER)}
 bind_port=${PRAXIS_BIND_PORT:-$(config_value PRAXIS_BIND_PORT)}
 bind_port=${bind_port:-4310}
@@ -38,19 +44,33 @@ fail() {
 }
 
 validate_inputs() {
-  for command_name in docker curl openssl awk grep install sha256sum; do
+  for command_name in docker curl openssl awk grep head install sed sha256sum tr; do
     command -v "$command_name" >/dev/null 2>&1 || fail "$command_name is unavailable"
   done
   docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable'
   printf '%s' "$stack_prefix" | grep -Eq '^[a-z0-9][a-z0-9_.-]*$' || fail 'PRAXIS_STACK_PREFIX contains unsupported characters'
   case "$bind_port" in ''|*[!0-9]*) fail 'PRAXIS_BIND_PORT must be numeric' ;; esac
   [ "$bind_port" -ge 1024 ] && [ "$bind_port" -le 65535 ] || fail 'PRAXIS_BIND_PORT must be between 1024 and 65535'
-  [ -n "$allowed_user" ] || fail 'TAILSCALE_ALLOWED_USER is required'
-  printf '%s' "$allowed_user" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9@._+-]*$' || fail 'TAILSCALE_ALLOWED_USER contains unsupported characters'
+  case "$access_mode" in
+    tailscale)
+      [ -n "$allowed_user" ] || fail 'TAILSCALE_ALLOWED_USER is required'
+      printf '%s' "$allowed_user" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9@._+-]*$' || fail 'TAILSCALE_ALLOWED_USER contains unsupported characters'
+      ;;
+    password) ;;
+    *) fail 'ACCESS_MODE must be password or tailscale' ;;
+  esac
   for secret_file in "$source_admin_secret" "$source_application_secret"; do
     [ -f "$secret_file" ] && [ -r "$secret_file" ] && [ -s "$secret_file" ] || fail "secret file is missing or empty: $secret_file"
     [ "$(awk 'END { print NR }' "$secret_file")" -eq 1 ] || fail "secret file must contain exactly one line: $secret_file"
   done
+  if [ "$access_mode" = password ]; then
+    for secret_file in "$source_access_password" "$source_session_secret"; do
+      [ -f "$secret_file" ] && [ -r "$secret_file" ] && [ -s "$secret_file" ] || fail "secret file is missing or empty: $secret_file"
+      [ "$(awk 'END { print NR }' "$secret_file")" -eq 1 ] || fail "secret file must contain exactly one line: $secret_file"
+    done
+    [ "$(awk 'NR == 1 { print length($0) }' "$source_access_password")" -ge 16 ] || fail 'access password must contain at least 16 characters'
+    [ "$(awk 'NR == 1 { print length($0) }' "$source_session_secret")" -ge 32 ] || fail 'session secret must contain at least 32 characters'
+  fi
 }
 
 container_label() {
@@ -92,6 +112,12 @@ prepare_runtime_secrets() {
   fi
   install -m 0444 "$source_admin_secret" "$runtime_admin_secret"
   install -m 0444 "$source_application_secret" "$runtime_application_secret"
+  if [ "$access_mode" = password ]; then
+    install -m 0444 "$source_access_password" "$runtime_access_password"
+    install -m 0444 "$source_session_secret" "$runtime_session_secret"
+  else
+    rm -f "$runtime_access_password" "$runtime_session_secret"
+  fi
 }
 
 ensure_networks() {
@@ -205,6 +231,18 @@ start_stack() {
   remove_owned_container_if_present "$application_container"
   remove_owned_container_if_present "$database_container"
 
+  set -- -e "ACCESS_MODE=$access_mode"
+  if [ "$access_mode" = password ]; then
+    set -- "$@" \
+      -e ACCESS_PASSWORD_FILE=/run/secrets/praxis_access_password \
+      -e SESSION_SECRET_FILE=/run/secrets/praxis_session_secret \
+      -e SESSION_COOKIE_SECURE=true \
+      -v "$runtime_access_password:/run/secrets/praxis_access_password:ro" \
+      -v "$runtime_session_secret:/run/secrets/praxis_session_secret:ro"
+  else
+    set -- "$@" -e "TAILSCALE_ALLOWED_USER=$allowed_user"
+  fi
+
   docker run -d --name "$database_container" --network "$backend_network" --restart unless-stopped \
     --label "$label_key=$stack_prefix" --label io.praxiscontrol.role=database \
     -e POSTGRES_USER=praxis_cluster_admin -e POSTGRES_DB=postgres \
@@ -229,7 +267,7 @@ start_stack() {
     -e DATABASE_MODE=postgres -e DATABASE_HOST="$database_container" -e DATABASE_PORT=5432 \
     -e DATABASE_NAME=praxis_control -e DATABASE_USER=praxis_control \
     -e DATABASE_PASSWORD_FILE=/run/secrets/praxis_db_password -e DATABASE_SSL=false \
-    -e ACCESS_MODE=tailscale -e TAILSCALE_ALLOWED_USER="$allowed_user" \
+    "$@" \
     -e RUN_MIGRATIONS=true -e RULESET_VERSION=2026.07.28-mvp1 \
     -v "$runtime_application_secret:/run/secrets/praxis_db_password:ro" \
     --health-cmd="node -e \"fetch('http://127.0.0.1:4310/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\"" \
@@ -241,8 +279,20 @@ start_stack() {
 
   [ -z "$(docker port "$database_container")" ] || fail 'database unexpectedly publishes a host port'
   [ "$(docker port "$application_container" 4310/tcp)" = "127.0.0.1:$bind_port" ] || fail 'application is not bound to the expected loopback port'
-  [ "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:$bind_port/api/dashboard")" = 401 ] || fail 'missing identity was not rejected'
-  [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "Tailscale-User-Login: $allowed_user" "http://127.0.0.1:$bind_port/api/dashboard")" = 200 ] || fail 'allowlisted identity was not accepted'
+  [ "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:$bind_port/api/dashboard")" = 401 ] || fail 'unauthenticated API request was not rejected'
+  if [ "$access_mode" = tailscale ]; then
+    [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "Tailscale-User-Login: $allowed_user" "http://127.0.0.1:$bind_port/api/dashboard")" = 200 ] || fail 'allowlisted identity was not accepted'
+  else
+    login_page=$(curl -fsS "http://127.0.0.1:$bind_port/login")
+    login_csrf=$(printf '%s\n' "$login_page" | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+    [ -n "$login_csrf" ] || fail 'login CSRF token was not found'
+    login_response=$(tr -d '\r\n' <"$runtime_access_password" | curl -sS -i -X POST "http://127.0.0.1:$bind_port/login" \
+      --data-urlencode "_csrf=$login_csrf" --data-urlencode 'password@-')
+    printf '%s\n' "$login_response" | head -1 | grep -Eq ' 303 ' || fail 'password login did not redirect after success'
+    session_cookie=$(printf '%s\n' "$login_response" | awk 'tolower($1) == "set-cookie:" { sub(/\r$/, ""); sub(/^[^:]*:[ ]*/, ""); split($0, value, ";"); print value[1]; exit }')
+    [ -n "$session_cookie" ] || fail 'password login did not issue a session cookie'
+    [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "Cookie: $session_cookie" "http://127.0.0.1:$bind_port/api/dashboard")" = 200 ] || fail 'password session was not accepted'
+  fi
 
   trap - EXIT INT TERM
   printf 'Praxis Control full profile is running on http://127.0.0.1:%s\n' "$bind_port"

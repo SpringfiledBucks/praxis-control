@@ -46,12 +46,17 @@ services:
       DATABASE_USER: praxis_control
       DATABASE_PASSWORD_FILE: /run/secrets/praxis_db_password
       DATABASE_SSL: "false"
-      ACCESS_MODE: tailscale
-      TAILSCALE_ALLOWED_USER: ${TAILSCALE_ALLOWED_USER:?set TAILSCALE_ALLOWED_USER}
+      ACCESS_MODE: ${ACCESS_MODE:-password}
+      TAILSCALE_ALLOWED_USER: ${TAILSCALE_ALLOWED_USER:-}
+      ACCESS_PASSWORD_FILE: /run/secrets/praxis_access_password
+      SESSION_SECRET_FILE: /run/secrets/praxis_session_secret
+      SESSION_COOKIE_SECURE: "true"
       RUN_MIGRATIONS: "true"
       RULESET_VERSION: 2026.07.28-mvp1
     secrets:
       - praxis_db_password
+      - praxis_access_password
+      - praxis_session_secret
     ports:
       - "127.0.0.1:${PRAXIS_BIND_PORT:-4310}:4310"
     read_only: true
@@ -85,3 +90,7 @@ secrets:
     file: ${PRAXIS_DB_ADMIN_PASSWORD_FILE:-./secrets/database-admin-password.txt}
   praxis_db_password:
     file: ${PRAXIS_DB_PASSWORD_FILE:-./secrets/database-app-password.txt}
+  praxis_access_password:
+    file: ${PRAXIS_ACCESS_PASSWORD_FILE:-./secrets/access-password.txt}
+  praxis_session_secret:
+    file: ${PRAXIS_SESSION_SECRET_FILE:-./secrets/session-secret.txt}

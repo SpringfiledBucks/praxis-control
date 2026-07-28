@@ -33,7 +33,7 @@ praxis restore --file <备份.tgz> --target <独立目录>
 
 NAS 已于 2026-07-28 完成主机、Gitea Web/API 与 Git SSH 的只读恢复确认。全量版应用、证书、认证、PostgreSQL、备份恢复和访问边界仍须分别验收，不直接把轻量数据切换过去。
 
-隔离容器基线位于 `infra/full/`：PostgreSQL 不发布端口，应用仅发布到主机 `127.0.0.1:4310`，密码通过 secret 文件提供，并要求认证代理注入匹配的 Tailscale 用户身份。NAS 隔离验收已覆盖真实写入、审计、备份和独立恢复；当前 Headscale/HTTPS 与生产暴露面仍未满足上线门槛，详见 `docs/status/2026-07-29-full-profile-container.md`。
+隔离容器基线位于 `infra/full/`：PostgreSQL 不发布端口，应用仅发布到主机 `127.0.0.1:4310`，数据库和访问凭据均通过 secret 文件提供。默认由应用完成单用户密码会话认证；具备可信身份头代理时仍可切换到 Tailscale 身份模式。NAS 隔离验收已覆盖真实写入、审计、备份、独立恢复、密码登录及 Nginx 模板语法；真实证书和生产 5432 暴露面仍未满足上线门槛，详见 `docs/status/2026-07-29-full-profile-container.md` 与 `docs/status/2026-07-29-production-access.md`。
 
 ## Git 远端
 

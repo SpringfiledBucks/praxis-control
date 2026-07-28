@@ -31,6 +31,8 @@
 - 当前为 Headscale 控制平面，MagicDNS 未启用，`tailscale serve status --json` 为空，不能把官方 Tailscale Serve 的 HTTPS 与身份头能力视为现成可用；
 - 因 TLS/认证代理和生产 5432 暴露面尚未收敛，正式多设备入口与生产数据迁移保持 BLOCKED，不降级为裸 HTTP 或直接复用现有业务数据库。
 
+应用原生密码认证与 Nginx HTTPS 模板的后续进展见 `2026-07-29-production-access.md`；它们已消除对 Headscale 身份头的强依赖，但真实证书安装和 5432 治理仍属于生产变更门槛。
+
 ## 下一验收门槛
 
 1. 新建 Praxis Control 独立生产卷和数据库，不复用现有业务事实库；

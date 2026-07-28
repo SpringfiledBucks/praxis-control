@@ -4,9 +4,13 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import type { AppConfig } from './config.js';
 import type { Database } from './infrastructure/db.js';
+import { LoginRateLimiter, PasswordAccess } from './security/password-access.js';
 import { createRouter, type SystemControl } from './web/routes.js';
 
 export function createApp(database: Database, config: AppConfig, system?: SystemControl): Express {
+  if (config.accessMode === 'password' && (!system || !config.accessPassword || !config.sessionSecret)) {
+    throw new Error('密码访问模式必须提供访问密钥、会话密钥和系统令牌');
+  }
   const app = express();
   app.disable('x-powered-by');
   app.set('view engine', 'ejs');
@@ -14,7 +18,9 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.locals.rulesetVersion = config.rulesetVersion;
   app.locals.databaseBackend = database.backend;
   app.locals.csrfToken = system?.csrfToken ?? '';
-  app.locals.shutdownToken = system?.shutdownToken ?? '';
+  app.locals.shutdownToken = config.accessMode === 'local' ? system?.shutdownToken ?? '' : '';
+  app.locals.accessMode = config.accessMode;
+  app.locals.authenticated = config.accessMode === 'local';
   app.locals.formatDate = (value: unknown) => new Date(String(value)).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
   app.locals.json = (value: unknown) => JSON.stringify(value, null, 2);
 
@@ -22,13 +28,35 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.use(compression());
   app.use(express.urlencoded({ extended: true, limit: '256kb' }));
   app.use(express.json({ limit: '256kb' }));
+  if (config.accessMode === 'password') app.set('trust proxy', 1);
+  const passwordAccess = config.accessMode === 'password'
+    ? new PasswordAccess(config.accessPassword!, config.sessionSecret!, config.sessionCookieSecure)
+    : undefined;
+  const loginRateLimiter = new LoginRateLimiter();
   app.use((req, res, next) => {
-    if (config.accessMode !== 'tailscale' || req.path === '/health') return next();
-    const identity = req.get('tailscale-user-login')?.trim().toLowerCase();
-    if (identity === config.tailscaleAllowedUser) return next();
-    if (req.path.startsWith('/api/')) {
-      return res.status(401).json({ status: 'error', message: '未通过 Tailscale 身份校验。' });
+    res.locals.authenticated = config.accessMode === 'local';
+    if (req.path === '/health' || req.path.startsWith('/static/')) return next();
+    if (config.accessMode === 'local') return next();
+    res.set('Cache-Control', 'no-store');
+    if (config.accessMode === 'tailscale') {
+      const identity = req.get('tailscale-user-login')?.trim().toLowerCase();
+      if (identity === config.tailscaleAllowedUser) {
+        res.locals.authenticated = true;
+        return next();
+      }
+    } else if (passwordAccess) {
+      const session = passwordAccess.readSessionCookie(req.get('cookie'));
+      if (passwordAccess.verifySession(session)) {
+        res.locals.authenticated = true;
+        return next();
+      }
+      if (req.path === '/login') return next();
     }
+    if (req.path.startsWith('/api/')) {
+      const message = config.accessMode === 'tailscale' ? '未通过 Tailscale 身份校验。' : '未通过访问认证。';
+      return res.status(401).json({ status: 'error', message });
+    }
+    if (config.accessMode === 'password') return res.redirect(302, '/login');
     return res.status(401).render('error', { title: '访问未授权', message: '当前 Tailscale 身份不在允许列表中。' });
   });
   app.use('/static', express.static(path.join(process.cwd(), 'public'), { maxAge: config.nodeEnv === 'production' ? '1d' : 0 }));
@@ -44,6 +72,32 @@ export function createApp(database: Database, config: AppConfig, system?: System
     }
     return next();
   });
+  if (passwordAccess) {
+    app.get('/login', (_req, res) => {
+      if (res.locals.authenticated) return res.redirect(302, '/');
+      return res.status(200).render('login', { title: '登录', error: '' });
+    });
+    app.post('/login', (req, res) => {
+      if (res.locals.authenticated) return res.redirect(303, '/');
+      const rateLimitKey = req.ip ?? 'unknown';
+      const retryAfter = loginRateLimiter.retryAfterSeconds(rateLimitKey);
+      if (retryAfter > 0) {
+        res.set('Retry-After', String(retryAfter));
+        return res.status(429).render('login', { title: '登录', error: `尝试次数过多，请在 ${retryAfter} 秒后重试。` });
+      }
+      if (!passwordAccess.verifyPassword(req.body.password)) {
+        loginRateLimiter.recordFailure(rateLimitKey);
+        return res.status(401).render('login', { title: '登录', error: '密码不正确。' });
+      }
+      loginRateLimiter.reset(rateLimitKey);
+      res.set('Set-Cookie', passwordAccess.sessionCookie(passwordAccess.issueSession()));
+      return res.redirect(303, '/');
+    });
+    app.post('/logout', (_req, res) => {
+      res.set('Set-Cookie', passwordAccess.expiredCookie());
+      return res.redirect(303, '/login');
+    });
+  }
   app.use(createRouter(database, config.rulesetVersion, system));
 
   app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {

@@ -46,6 +46,7 @@ openssl rand -hex 32 >"$application_secret"
 if PRAXIS_STACK_PREFIX="$prefix" \
   PRAXIS_DB_ADMIN_PASSWORD_FILE="$admin_secret" \
   PRAXIS_DB_PASSWORD_FILE="$application_secret" \
+  ACCESS_MODE=tailscale \
   TAILSCALE_ALLOWED_USER=credential-test@example.invalid \
   PRAXIS_BIND_PORT=4315 \
   sh "$full_dir/manage.sh" start >"$log_file" 2>&1; then

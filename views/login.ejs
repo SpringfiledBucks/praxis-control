@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#13251d">
+  <title><%= title %> · Praxis Control</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-card panel">
+      <div class="login-mark" aria-hidden="true">实</div>
+      <p class="eyebrow">PRAXIS CONTROL</p>
+      <h1>进入实践控制台</h1>
+      <p class="lede">这是受保护的全量版入口。登录只建立当前浏览器会话，不会把密码写入数据库或浏览器存储。</p>
+      <% if (error) { %><p class="login-error" role="alert"><%= error %></p><% } %>
+      <form method="post" action="/login" class="login-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>访问密码
+          <input type="password" name="password" autocomplete="current-password" required autofocus>
+        </label>
+        <button class="button primary full" type="submit">登录</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

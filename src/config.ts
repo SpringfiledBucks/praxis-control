@@ -16,8 +16,11 @@ const envSchema = z.object({
   DATABASE_PASSWORD_FILE: z.string().min(1).optional(),
   PGLITE_DATA_DIR: z.string().min(1).optional(),
   DATABASE_SSL: z.enum(['true', 'false']).default('false'),
-  ACCESS_MODE: z.enum(['local', 'tailscale']).default('local'),
+  ACCESS_MODE: z.enum(['local', 'tailscale', 'password']).default('local'),
   TAILSCALE_ALLOWED_USER: z.string().min(1).optional(),
+  ACCESS_PASSWORD_FILE: z.string().min(1).optional(),
+  SESSION_SECRET_FILE: z.string().min(1).optional(),
+  SESSION_COOKIE_SECURE: z.enum(['true', 'false']).default('true'),
   RUN_MIGRATIONS: z.enum(['true', 'false']).default('true'),
   RULESET_VERSION: z.string().default('2026.07.28-mvp1'),
 });
@@ -33,19 +36,26 @@ export type AppConfig = {
   backupDir: string;
   runtimeDir: string;
   databaseSsl: boolean;
-  accessMode: 'local' | 'tailscale';
+  accessMode: 'local' | 'tailscale' | 'password';
   tailscaleAllowedUser?: string;
+  accessPassword?: string;
+  sessionSecret?: string;
+  sessionCookieSecure: boolean;
   runMigrations: boolean;
   rulesetVersion: string;
 };
 
+function readSingleLineSecret(file: string, label: string): string {
+  const value = readFileSync(file, 'utf8').replace(/\r?\n$/, '');
+  if (!value || value.includes('\n') || value.includes('\r')) {
+    throw new Error(`${label} 必须包含单行非空密钥`);
+  }
+  return value;
+}
+
 function databaseUrlFromSecretFile(env: z.infer<typeof envSchema>): string | undefined {
   if (!env.DATABASE_PASSWORD_FILE) return undefined;
-  const rawPassword = readFileSync(env.DATABASE_PASSWORD_FILE, 'utf8');
-  const password = rawPassword.replace(/\r?\n$/, '');
-  if (!password || password.includes('\n') || password.includes('\r')) {
-    throw new Error('DATABASE_PASSWORD_FILE 必须包含单行非空密码');
-  }
+  const password = readSingleLineSecret(env.DATABASE_PASSWORD_FILE, 'DATABASE_PASSWORD_FILE');
   const url = new URL('postgresql://localhost');
   url.hostname = env.DATABASE_HOST;
   url.port = String(env.DATABASE_PORT);
@@ -67,6 +77,20 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   if (env.ACCESS_MODE === 'tailscale' && !env.TAILSCALE_ALLOWED_USER) {
     throw new Error('ACCESS_MODE=tailscale 时必须设置 TAILSCALE_ALLOWED_USER');
   }
+  if (env.ACCESS_MODE === 'password' && (!env.ACCESS_PASSWORD_FILE || !env.SESSION_SECRET_FILE)) {
+    throw new Error('ACCESS_MODE=password 时必须设置 ACCESS_PASSWORD_FILE 和 SESSION_SECRET_FILE');
+  }
+  let accessPassword: string | undefined;
+  let sessionSecret: string | undefined;
+  if (env.ACCESS_MODE === 'password') {
+    accessPassword = readSingleLineSecret(env.ACCESS_PASSWORD_FILE!, 'ACCESS_PASSWORD_FILE');
+    sessionSecret = readSingleLineSecret(env.SESSION_SECRET_FILE!, 'SESSION_SECRET_FILE');
+    if (accessPassword.length < 16) throw new Error('ACCESS_PASSWORD_FILE 至少需要 16 个字符');
+    if (sessionSecret.length < 32) throw new Error('SESSION_SECRET_FILE 至少需要 32 个字符');
+  }
+  if (env.NODE_ENV === 'production' && env.ACCESS_MODE === 'password' && env.SESSION_COOKIE_SECURE !== 'true') {
+    throw new Error('生产密码模式必须启用 SESSION_COOKIE_SECURE=true');
+  }
   const directories = resolveAppDirectories(source);
   return {
     nodeEnv: env.NODE_ENV,
@@ -81,6 +105,9 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     databaseSsl: env.DATABASE_SSL === 'true',
     accessMode: env.ACCESS_MODE,
     ...(env.TAILSCALE_ALLOWED_USER ? { tailscaleAllowedUser: env.TAILSCALE_ALLOWED_USER.trim().toLowerCase() } : {}),
+    ...(accessPassword ? { accessPassword } : {}),
+    ...(sessionSecret ? { sessionSecret } : {}),
+    sessionCookieSecure: env.SESSION_COOKIE_SECURE === 'true',
     runMigrations: env.RUN_MIGRATIONS === 'true',
     rulesetVersion: env.RULESET_VERSION,
   };

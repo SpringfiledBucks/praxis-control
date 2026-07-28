@@ -159,4 +159,52 @@ describe('PGlite lightweight profile', () => {
       .set('tailscale-user-login', 'Owner@Example.COM')
       .expect(200);
   });
+
+  it('protects the full-profile Web and API with a signed password session', async () => {
+    const app = createApp(database, {
+      ...config,
+      accessMode: 'password',
+      accessPassword: 'correct-horse-battery-staple',
+      sessionSecret: 'session-secret-with-at-least-thirty-two-characters',
+      sessionCookieSecure: true,
+    }, {
+      csrfToken: 'password-csrf-token',
+      apiToken: 'password-api-token-password-api-token',
+      shutdownToken: 'password-shutdown-token',
+      requestShutdown: () => undefined,
+    });
+
+    await request(app).get('/health').expect(200);
+    await request(app).get('/').expect(302).expect('location', '/login');
+    await request(app).get('/api/dashboard').expect(401).expect({ status: 'error', message: '未通过访问认证。' });
+    await request(app).get('/login').expect(200).expect(/进入实践控制台/);
+    await request(app).post('/login').send({ password: 'correct-horse-battery-staple' }).expect(403);
+    await request(app).post('/login').type('form').send({ _csrf: 'password-csrf-token', password: 'wrong' }).expect(401);
+
+    const login = await request(app)
+      .post('/login')
+      .type('form')
+      .send({ _csrf: 'password-csrf-token', password: 'correct-horse-battery-staple' })
+      .expect(303)
+      .expect('location', '/');
+    const setCookie = login.headers['set-cookie'];
+    expect(setCookie).toBeDefined();
+    const setCookieHeader = (Array.isArray(setCookie) ? setCookie[0] : setCookie)!;
+    const cookie = setCookieHeader.split(';', 1)[0]!;
+    expect(setCookieHeader).toContain('__Host-praxis_session=');
+    expect(setCookieHeader).toContain('HttpOnly');
+    expect(setCookieHeader).toContain('SameSite=Strict');
+    expect(setCookieHeader).toContain('Secure');
+
+    await request(app).get('/').set('cookie', cookie).expect(200);
+    await request(app).get('/api/dashboard').set('cookie', cookie).expect(200);
+    await request(app)
+      .post('/logout')
+      .set('cookie', cookie)
+      .type('form')
+      .send({ _csrf: 'password-csrf-token' })
+      .expect(303)
+      .expect('location', '/login')
+      .expect('set-cookie', /Max-Age=0/);
+  });
 });
