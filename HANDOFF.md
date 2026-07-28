@@ -51,3 +51,5 @@
 - 2026-07-28 已只读确认 NAS、Gitea Web/API 和 Git SSH 恢复；
 - 目标仓库 `<GITEA_OWNER>/praxis-control` 尚不存在，本地没有 `origin`；
 - 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
+- Windows 轻量版已验证；Linux CI 运行环境尚未建立，见 `docs/status/2026-07-28-cross-platform-readiness.md`；
+- NAS PostgreSQL 当前对 LAN 与 Tailscale 暴露 5432，全量版保持 BLOCKED，见 `docs/status/2026-07-28-full-profile-readiness.md`。

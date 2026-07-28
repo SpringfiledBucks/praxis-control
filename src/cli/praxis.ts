@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import readline from 'node:readline/promises';
@@ -174,6 +175,26 @@ async function main(): Promise<void> {
     console.log(JSON.stringify(await api(await start(), '/api/system/backup', { method: 'POST', body: '{}' }), null, 2));
     return;
   }
+  if (command === 'audit-verify') {
+    console.log(JSON.stringify(await api(await start(), '/api/audit/verify'), null, 2));
+    return;
+  }
+  if (command === 'export') {
+    const targetOption = option('--target');
+    if (!targetOption) throw new Error('请使用 export --target <JSON 文件>。');
+    const target = path.resolve(targetOption);
+    const snapshot = await api(await start(), '/api/export');
+    await mkdir(path.dirname(target), { recursive: true });
+    try {
+      await writeFile(target, `${JSON.stringify(snapshot, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' });
+    } catch (error) {
+      const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
+      if (code === 'EEXIST') throw new Error(`导出目标已存在，不会覆盖：${target}`);
+      throw error;
+    }
+    console.log(JSON.stringify({ status: 'created', target }, null, 2));
+    return;
+  }
   if (command === 'restore') {
     if (config.databaseMode !== 'pglite') throw new Error('当前 restore 命令只支持 PGlite 轻量版备份。');
     const backupFile = option('--file');
@@ -188,6 +209,27 @@ async function main(): Promise<void> {
   }
   if (command === 'doctor') {
     const state = await runtime(false);
+    const nodeMajor = Number(process.versions.node.split('.')[0]);
+    let dataParentWritable = true;
+    try {
+      await access(path.dirname(config.dataDir), fsConstants.W_OK);
+    } catch {
+      dataParentWritable = false;
+    }
+    let service: Record<string, unknown> = { running: false };
+    if (state) {
+      try {
+        service = {
+          running: true,
+          pid: state.pid,
+          url: state.url,
+          health: await api(state, '/health'),
+          audit: await api(state, '/api/audit/verify'),
+        };
+      } catch (error) {
+        service = { running: true, pid: state.pid, url: state.url, reachable: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    }
     console.log(JSON.stringify({
       node: process.version,
       platform: process.platform,
@@ -195,7 +237,12 @@ async function main(): Promise<void> {
       dataDir: config.dataDir,
       pgliteDataDir: config.pgliteDataDir,
       runtimeDir: config.runtimeDir,
-      service: state ? { running: true, pid: state.pid, url: state.url } : { running: false },
+      checks: {
+        nodeSupported: nodeMajor >= 24,
+        dataParentWritable,
+        postgresConfigurationPresent: config.databaseMode !== 'postgres' || Boolean(config.databaseUrl),
+      },
+      service,
     }, null, 2));
     return;
   }
@@ -213,6 +260,8 @@ async function main(): Promise<void> {
   analyze --file FILE     分析一份 JSON 输入但不保存
   checkin --file FILE     保存一份 JSON 日常决策
   backup                  创建经过数据库接口导出的本地备份
+  audit-verify            校验全部追加式审计链
+  export --target FILE    导出可移植 JSON 快照且不覆盖已有文件
   restore --file F --target DIR
                           恢复 PGlite 备份到不存在的独立目录
   doctor                  输出跨平台环境诊断

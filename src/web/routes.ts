@@ -5,6 +5,8 @@ import { loadDashboard } from '../application/dashboard.js';
 import { changeProjectStatus, createProject, listProjects } from '../application/projects.js';
 import { loadWeeklySummary, saveWeeklyReview } from '../application/reviews.js';
 import { loadKnowledgeGraph } from '../application/graph.js';
+import { createPortableExport } from '../application/export.js';
+import { verifyAuditChain } from '../infrastructure/audit.js';
 import { parseDailyBody } from './parsing.js';
 import type { Database } from '../infrastructure/db.js';
 
@@ -58,6 +60,24 @@ export function createRouter(database: Database, rulesetVersion: string, system?
     try {
       res.json(await loadDashboard(database));
     } catch (error) { next(error); }
+  });
+
+  router.get('/api/meta', (_req, res) => {
+    res.json({
+      apiVersion: 1,
+      rulesetVersion,
+      backend: database.backend,
+      capabilities: {
+        dashboard: true,
+        checkins: true,
+        projects: true,
+        graph: true,
+        auditVerification: true,
+        portableExport: true,
+        backup: Boolean(system?.requestBackup),
+        safeShutdown: Boolean(system),
+      },
+    });
   });
 
   router.post('/checkins', async (req, res, next) => {
@@ -172,9 +192,27 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.get('/audit', async (_req, res, next) => {
     try {
-      const events = await database.query(`SELECT * FROM governance.audit_events ORDER BY created_at DESC LIMIT 100`);
-      res.render('audit', { title: '审计时间线', events: events.rows });
+      const [events, verification] = await Promise.all([
+        database.query(`SELECT * FROM governance.audit_events ORDER BY created_at DESC LIMIT 100`),
+        verifyAuditChain(database),
+      ]);
+      res.render('audit', { title: '审计时间线', events: events.rows, verification });
     } catch (error) { next(error); }
+  });
+
+  router.get('/api/audit/verify', async (_req, res, next) => {
+    try {
+      res.json(await verifyAuditChain(database));
+    } catch (error) { next(error); }
+  });
+
+  router.get('/api/export', async (req, res, next) => {
+    try {
+      if (!system || req.get('authorization') !== `Bearer ${system.apiToken}`) {
+        return res.status(403).json({ status: 'error', message: '导出需要本机运行时令牌。' });
+      }
+      return res.json(await createPortableExport(database, rulesetVersion));
+    } catch (error) { return next(error); }
   });
 
   router.get('/health', async (_req, res) => {

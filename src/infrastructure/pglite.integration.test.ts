@@ -80,6 +80,10 @@ describe('PGlite lightweight profile', () => {
     await request(app).get('/health').expect(200).expect((response) => {
       expect(response.body.backend).toBe('pglite');
     });
+    await request(app).get('/api/meta').expect(200).expect((response) => {
+      expect(response.body.apiVersion).toBe(1);
+      expect(response.body.capabilities.portableExport).toBe(true);
+    });
     await request(app).get('/').expect(200).expect(/实践控制台/);
     await request(app).post('/api/checkins/analyze').send({}).expect(403);
 
@@ -98,5 +102,19 @@ describe('PGlite lightweight profile', () => {
     await request(app).get('/api/graph').expect(200).expect((response) => {
       expect(response.body.nodes.length).toBeGreaterThan(1);
     });
+    await request(app).get('/api/audit/verify').expect(200).expect((response) => {
+      expect(response.body.valid).toBe(true);
+      expect(response.body.totalEvents).toBeGreaterThan(0);
+    });
+    await request(app).get('/api/export').expect(403);
+    await request(app)
+      .get('/api/export')
+      .set('authorization', 'Bearer api-test-token-api-test-token-api-test-token')
+      .expect((response) => {
+        expect(response.status, JSON.stringify(response.body)).toBe(200);
+        expect(response.body.format).toBe('praxis-control-portable-json');
+        expect(response.body.counts.dailyCheckins).toBeGreaterThan(0);
+        expect(response.body.counts.auditEvents).toBeGreaterThan(0);
+      });
   });
 });
