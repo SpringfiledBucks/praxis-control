@@ -51,7 +51,7 @@
 ## 当前外部状态
 
 - NAS Gitea 私有仓库 `<GITEA_OWNER>/praxis-control` 已建立，本地唯一 `origin` 指向 Gitea，`main` 已推送；
-- Gitea Actions run 64 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，见 `docs/status/2026-07-29-gitea-ci.md`；
+- Gitea Actions run 68 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，见 `docs/status/2026-07-29-gitea-ci.md`；
 - GitHub 所有者为 `SpringfiledBucks`，但尚无 `praxis-control` 仓库；当前连接器不能建仓且应用内浏览器未登录，Gitea 到 GitHub 的推送镜像待一次性 UI 配置，见 `docs/status/2026-07-28-git-remote-readiness.md`；
 - NAS 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
 - Windows 轻量版已验证；Linux GTK 已在 NAS 一次性环境通过真实 PGlite 服务、原生按钮动作、AT-SPI、中文截图和 Meson 安装后启动验收，当前 MVP 范围为 VERIFIED，见 `docs/status/2026-07-28-linux-gui.md`；

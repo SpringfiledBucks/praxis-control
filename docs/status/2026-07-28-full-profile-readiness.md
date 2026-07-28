@@ -27,7 +27,7 @@
 - 2026-07-28 使用 NAS 现有 `timescale/timescaledb:latest-pg16` 镜像启动无卷临时容器，仅绑定 NAS `127.0.0.1:55432`，通过 SSH 隧道运行真实合同；
 - 真实 PostgreSQL 测试 2/2 通过：PGlite 快照导入、逐表计数、迁移幂等、后续事务写入、审计链和 PostgreSQL 导出均通过；
 - 验收后临时容器因 `--rm` 被删除，SSH 隧道关闭，55432 无监听；现有 TimescaleDB 容器、数据卷、账号和 5432 服务均未连接或修改；
-- Gitea Actions run 64 已使用一次性 PostgreSQL service 重复执行真实合同，`postgres-contract` 作业（task 55）成功；本机默认测试仍会在缺少 `POSTGRES_TEST_URL` 时明确跳过 PostgreSQL 文件，不把跳过报告为通过；
+- Gitea Actions run 68 已使用一次性 PostgreSQL service 重复执行真实合同，`postgres-contract` 作业（task 107）成功；本机默认测试仍会在缺少 `POSTGRES_TEST_URL` 时明确跳过 PostgreSQL 文件，不把跳过报告为通过；
 - 该测试只使用一次性 CI 数据库，不连接 NAS 现有 TimescaleDB，也不需要生产凭据。
 - 2026-07-29 全量版容器镜像、最低权限角色、secret 文件、回环发布、身份校验、真实写入、custom dump 和独立恢复已在 NAS 隔离环境通过，见 `docs/status/2026-07-29-full-profile-container.md`；生产 TLS/认证入口和 5432 暴露面仍未收敛，因此本文件总体状态保持 BLOCKED。
 
