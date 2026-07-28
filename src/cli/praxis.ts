@@ -6,6 +6,9 @@ import process from 'node:process';
 import readline from 'node:readline/promises';
 import { loadConfig } from '../config.js';
 import { restorePGliteBackup } from '../infrastructure/backup.js';
+import { createDatabase } from '../infrastructure/db.js';
+import { runMigrations } from '../infrastructure/migrations.js';
+import { importPortableSnapshot } from '../application/import.js';
 import { getLiveRuntimeState, type RuntimeState } from '../runtime/control.js';
 
 const config = loadConfig();
@@ -207,6 +210,23 @@ async function main(): Promise<void> {
     }), null, 2));
     return;
   }
+  if (command === 'import-portable') {
+    if (config.databaseMode !== 'postgres') throw new Error('便携快照导入只允许用于 PostgreSQL 全量版。');
+    if (!hasFlag('--confirm-empty-postgres')) {
+      throw new Error('必须显式添加 --confirm-empty-postgres；导入器仍会独立验证目标业务表为空。');
+    }
+    const file = option('--file');
+    if (!file) throw new Error('请使用 import-portable --file <JSON 文件> --confirm-empty-postgres。');
+    const targetDatabase = await createDatabase(config);
+    try {
+      await runMigrations(targetDatabase);
+      const snapshot = JSON.parse(await readFile(path.resolve(file), 'utf8'));
+      console.log(JSON.stringify({ status: 'imported', counts: await importPortableSnapshot(targetDatabase, snapshot) }, null, 2));
+    } finally {
+      await targetDatabase.close();
+    }
+    return;
+  }
   if (command === 'doctor') {
     const state = await runtime(false);
     const nodeMajor = Number(process.versions.node.split('.')[0]);
@@ -264,6 +284,8 @@ async function main(): Promise<void> {
   export --target FILE    导出可移植 JSON 快照且不覆盖已有文件
   restore --file F --target DIR
                           恢复 PGlite 备份到不存在的独立目录
+  import-portable --file F --confirm-empty-postgres
+                          将已校验快照事务导入空 PostgreSQL 全量库
   doctor                  输出跨平台环境诊断
   tui                     启动终端交互界面
 `);

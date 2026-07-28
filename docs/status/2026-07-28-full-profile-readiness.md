@@ -26,3 +26,11 @@
 - Gitea Actions 已定义一次性 PostgreSQL 16 service，覆盖迁移幂等、事务写入、追加式审计和可移植导出；
 - 当前目标仓库与 runner 尚未建立，因此该真实 PostgreSQL CI 仍为 NOT VERIFIED；本机默认测试会明确跳过它，不把跳过报告为通过；
 - 该测试只使用一次性 CI 数据库，不连接 NAS 现有 TimescaleDB，也不需要生产凭据。
+
+## 便携迁移边界
+
+- 已实现 PGlite/旧 PostgreSQL 快照到空 PostgreSQL 的事务导入；
+- 导入前强制校验格式版本、逐集合计数和完整审计链；
+- 目标业务表只要存在任何记录即拒绝，不提供隐式合并、覆盖或清空；
+- CLI 还要求 `--confirm-empty-postgres`，迁移完成后重建审计头；
+- PGlite 到独立 PGlite 的往返测试已验证逐表计数和审计一致；真实 PostgreSQL 路径等待隔离 CI 运行。

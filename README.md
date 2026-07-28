@@ -34,6 +34,7 @@ npm run praxis -- backup
 npm run praxis -- restore --file <备份文件> --target <不存在的独立目录>
 npm run praxis -- audit-verify
 npm run praxis -- export --target <新建 JSON 文件>
+npm run praxis -- import-portable --file <JSON 文件> --confirm-empty-postgres
 npm run praxis -- doctor
 ```
 
