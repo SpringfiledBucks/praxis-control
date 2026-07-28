@@ -9,6 +9,8 @@ coverage/
 .DS_Store
 Thumbs.db
 .tmp/
+clients/**/bin/
+clients/**/obj/
 
 # 本地权威参考资料可能包含个人信息；需求已提炼到 HANDOFF.md 和 ADR。
 /个人实践与决策系统_*.zip

@@ -10,6 +10,7 @@
 - 服务默认只监听 `127.0.0.1:4310`；
 - Windows/Linux 共用 Web、CLI 与 TUI；
 - Windows/Linux GUI 后续按平台特点分别实现；
+- Windows WinUI 3 最小原生壳已通过构建、启动、刷新与安全关闭验收；
 - 全量版保留 PostgreSQL 适配器，NAS 恢复后再验收；
 - Markdown 是内容和导出格式，不是实时事实库。
 

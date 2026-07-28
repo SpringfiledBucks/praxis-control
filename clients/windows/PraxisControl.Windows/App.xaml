@@ -1,0 +1,23 @@
+<Application
+    x:Class="PraxisControl.Windows.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Application.Resources>
+    <ResourceDictionary>
+      <Color x:Key="PraxisInk">#24312D</Color>
+      <Color x:Key="PraxisMuted">#65736D</Color>
+      <Color x:Key="PraxisAccent">#6E806F</Color>
+      <Color x:Key="PraxisSurface">#F4F1E8</Color>
+      <Color x:Key="PraxisBackground">#FAF9F5</Color>
+      <Color x:Key="PraxisCard">#FFFFFF</Color>
+      <Color x:Key="PraxisStroke">#D8DDD7</Color>
+      <SolidColorBrush x:Key="PraxisInkBrush" Color="{StaticResource PraxisInk}" />
+      <SolidColorBrush x:Key="PraxisMutedBrush" Color="{StaticResource PraxisMuted}" />
+      <SolidColorBrush x:Key="PraxisAccentBrush" Color="{StaticResource PraxisAccent}" />
+      <SolidColorBrush x:Key="PraxisSurfaceBrush" Color="{StaticResource PraxisSurface}" />
+      <SolidColorBrush x:Key="PraxisBackgroundBrush" Color="{StaticResource PraxisBackground}" />
+      <SolidColorBrush x:Key="PraxisCardBrush" Color="{StaticResource PraxisCard}" />
+      <SolidColorBrush x:Key="PraxisStrokeBrush" Color="{StaticResource PraxisStroke}" />
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>
