@@ -10,7 +10,15 @@ jobs:
     container:
       image: praxis-control-ci:node24-gtk4-v1
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout authoritative commit
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          git init .
+          git remote add origin http://<NAS_LAN_IP>:3000/<GITEA_OWNER>/praxis-control.git
+          git -c http.extraheader="Authorization: token $GITEA_TOKEN" fetch --no-tags --depth=1 origin "$TARGET_SHA"
+          git checkout --detach FETCH_HEAD
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
@@ -21,7 +29,15 @@ jobs:
     container:
       image: praxis-control-ci:node24-gtk4-v1
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout authoritative commit
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          git init .
+          git remote add origin http://<NAS_LAN_IP>:3000/<GITEA_OWNER>/praxis-control.git
+          git -c http.extraheader="Authorization: token $GITEA_TOKEN" fetch --no-tags --depth=1 origin "$TARGET_SHA"
+          git checkout --detach FETCH_HEAD
       - run: npm ci
       - run: npm run build
       - run: npm run test:linux-client
@@ -53,6 +69,14 @@ jobs:
     env:
       POSTGRES_TEST_URL: postgresql://praxis_test:praxis_test_password@postgres:5432/praxis_test
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout authoritative commit
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          git init .
+          git remote add origin http://<NAS_LAN_IP>:3000/<GITEA_OWNER>/praxis-control.git
+          git -c http.extraheader="Authorization: token $GITEA_TOKEN" fetch --no-tags --depth=1 origin "$TARGET_SHA"
+          git checkout --detach FETCH_HEAD
       - run: npm ci
       - run: npm run test:postgres
