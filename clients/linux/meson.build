@@ -18,5 +18,6 @@ configure_file(
 
 install_data('src/app.mjs', 'src/core.mjs', install_dir: pkgdatadir)
 install_data('data/io.praxiscontrol.App.desktop', install_dir: datadir / 'applications')
+install_data('data/io.praxiscontrol.App.svg', install_dir: datadir / 'icons/hicolor/scalable/apps')
 
-gnome.post_install(update_desktop_database: true)
+gnome.post_install(update_desktop_database: true, gtk_update_icon_cache: true)
