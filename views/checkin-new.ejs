@@ -1,0 +1,82 @@
+<%- include('partials/head', { title }) %>
+<section class="page-heading">
+  <div><p class="eyebrow">L0 · 每日快速行动</p><h1>今天真正要改变什么？</h1><p>系统先检查边界，再分别显示收益、可行性与风险，不用一个总分替你决定。</p></div>
+</section>
+
+<form id="daily-form" class="decision-layout" method="post" action="/checkins">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-stack">
+    <section class="form-section">
+      <div class="section-number">01</div>
+      <div class="section-content"><h2>现实状态</h2><p>只填写今天真实可用的资源。</p>
+        <div class="field-grid three">
+          <label>日期<input type="date" name="checkinDate" value="<%= today %>" required></label>
+          <label>可自由支配分钟<input type="number" name="availableMinutes" min="0" max="1440" value="120" required></label>
+          <label>安全储备<input type="number" name="reservePercent" min="0" max="80" value="20" required><small>%</small></label>
+        </div>
+        <div class="field-grid two sliders">
+          <label>精力 <output data-for="energy">6</output><input type="range" name="energy" min="0" max="10" value="6"></label>
+          <label>注意力 <output data-for="attention">6</output><input type="range" name="attention" min="0" max="10" value="6"></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-number">02</div>
+      <div class="section-content"><h2>目标、矛盾与瓶颈</h2>
+        <label>当前阶段目标<textarea name="stageGoal" required placeholder="例：连续四周建立可持续的实践—反馈闭环"><%= latest?.stage_goal || '' %></textarea></label>
+        <label>当前主要矛盾<textarea name="mainContradiction" required placeholder="目标状态与现实条件之间的主导关系"><%= latest?.main_contradiction || '' %></textarea></label>
+        <label>当前瓶颈<textarea name="bottleneck" required placeholder="如果只改善一个环节，哪个最能释放整体产出？"><%= latest?.bottleneck || '' %></textarea></label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-number">03</div>
+      <div class="section-content"><h2>一个主要行动</h2>
+        <label>今天推进什么<textarea name="mainAction" required placeholder="动作 + 对象"><%= latest?.main_action || '' %></textarea></label>
+        <label>最小可交付结果<textarea name="deliverable" required placeholder="外部可观察、可验收的结果"><%= latest?.deliverable || '' %></textarea></label>
+        <div class="field-grid two">
+          <label>预计投入分钟<input type="number" name="estimatedMinutes" min="1" max="1440" value="90" required></label>
+          <label>当前核心 WIP<input type="number" name="activeWip" min="0" max="99" value="<%= activeWip %>" readonly></label>
+        </div>
+        <label>停止条件<textarea name="stopCondition" required placeholder="出现什么情况就停止、缩小或改为调查？"></textarea></label>
+        <label>今天明确不做<textarea name="explicitNotDo" placeholder="防止范围膨胀"></textarea></label>
+        <label class="check"><input type="checkbox" name="opensNewCoreProject"> 这会新增一个核心项目</label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-number">04</div>
+      <div class="section-content"><h2>判断依据</h2><p>用粗粒度评分显性化假设，不追求伪精确。</p>
+        <div class="field-grid three sliders">
+          <label>主要矛盾贡献 <output data-for="contradictionContribution">8</output><input type="range" name="contradictionContribution" min="0" max="10" value="8"></label>
+          <label>瓶颈贡献 <output data-for="bottleneckContribution">8</output><input type="range" name="bottleneckContribution" min="0" max="10" value="8"></label>
+          <label>证据强度 <output data-for="evidenceStrength">6</output><input type="range" name="evidenceStrength" min="0" max="10" value="6"></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-number">05</div>
+      <div class="section-content"><h2>风险与硬边界</h2>
+        <label>风险等级<select name="riskLevel" id="risk-level"><option value="low">低：可逆、影响范围小</option><option value="medium">中：需要明确停止条件</option><option value="high">高：生产、资金、权限、敏感数据或不可逆</option></select></label>
+        <div id="risk-questions" class="risk-questions" hidden>
+          <label class="check"><input type="checkbox" name="hasAuthorization"> 已确认必要授权</label>
+          <label class="check"><input type="checkbox" name="hasRecoveryPlan"> 已有回滚、恢复或人工接管方案</label>
+        </div>
+        <label class="check"><input type="checkbox" name="lossTolerable" checked> 最坏损失在当前承受范围内</label>
+      </div>
+    </section>
+  </div>
+
+  <aside class="analysis-rail">
+    <div class="sticky-card">
+      <p class="eyebrow">实时分析</p>
+      <div id="analysis-preview" class="analysis-preview muted">填写必要字段后，点击“分析当前行动”。</div>
+      <button class="button secondary full" type="button" id="analyze-button">分析当前行动</button>
+      <button class="button primary full" type="submit" id="save-button">保存正式决策</button>
+      <small>保存后会记录输入、规则版本、分析输出和哈希审计事件。</small>
+    </div>
+  </aside>
+</form>
+<%- include('partials/foot') %>

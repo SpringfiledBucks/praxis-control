@@ -1,0 +1,23 @@
+<%- include('partials/head', { title }) %>
+<section class="page-heading">
+  <div><p class="eyebrow">关系不是装饰</p><h1>实践关系图谱</h1><p>目标、项目、决策、证据、风险与规则使用稳定 ID 连接。图形用于发现结构，事实仍由数据库约束。</p></div>
+</section>
+
+<section class="graph-layout">
+  <article class="panel graph-panel">
+    <div class="panel-heading"><div><p class="eyebrow">当前结构</p><h2><%= graph.nodes.length %> 个节点 · <%= graph.edges.length %> 条关系</h2></div></div>
+    <div id="graph-canvas" class="graph-canvas" role="img" aria-label="目标、项目与决策关系图"></div>
+  </article>
+  <aside class="panel graph-legend">
+    <h2>图例</h2>
+    <ul class="clean-list">
+      <li><span class="node-dot objective"></span><strong>目标</strong></li>
+      <li><span class="node-dot project"></span><strong>项目</strong></li>
+      <li><span class="node-dot decision"></span><strong>决策</strong></li>
+      <li><span class="node-dot evidence"></span><strong>证据</strong></li>
+      <li><span class="node-dot risk"></span><strong>风险</strong></li>
+    </ul>
+    <p class="empty">当前先显示结构和方向。后续 GUI 会增加筛选、路径追踪、影响分析与证据强度。</p>
+  </aside>
+</section>
+<%- include('partials/foot') %>

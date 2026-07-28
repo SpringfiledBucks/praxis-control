@@ -1,0 +1,47 @@
+<%- include('partials/head', { title }) %>
+<section class="hero">
+  <div>
+    <p class="eyebrow">今日 · 调查现实，再行动</p>
+    <h1>把注意力放在真正改变状态的事上。</h1>
+    <p class="lede">日常只运行最小决策内核；高风险、协作与重大选择按条件展开，不把十四个模块变成十四张表。</p>
+  </div>
+  <a class="button primary" href="/checkins/new">开始今日决策</a>
+</section>
+
+<section class="metric-grid" aria-label="系统状态">
+  <article class="metric"><span>核心在制品</span><strong><%= data.activeWip %> / 3</strong><small><%= data.activeWip >= 3 ? '新增项目需先替换' : '仍有容量' %></small></article>
+  <article class="metric"><span>待结果复盘</span><strong><%= data.awaitingReview %></strong><small>好决策与好运气分开看</small></article>
+  <article class="metric"><span>近 7 日已闭环</span><strong><%= data.reviewedLast7Days %></strong><small>实践结果才是检验</small></article>
+</section>
+
+<section class="split-grid">
+  <article class="panel accent-panel">
+    <div class="panel-heading"><div><p class="eyebrow">最近一次</p><h2>当前行动</h2></div></div>
+    <% if (data.latestCheckin) { %>
+      <span class="status <%= String(data.latestCheckin.analysis_status).toLowerCase() %>"><%= data.latestCheckin.analysis_status %></span>
+      <h3><%= data.latestCheckin.main_action %></h3>
+      <p><%= data.latestCheckin.deliverable %></p>
+      <a class="text-link" href="/checkins/<%= data.latestCheckin.id %>">查看依据与记录 →</a>
+    <% } else { %>
+      <div class="empty"><p>还没有正式决策记录。</p><a href="/checkins/new">用两分钟建立第一条闭环</a></div>
+    <% } %>
+  </article>
+
+  <article class="panel">
+    <div class="panel-heading"><div><p class="eyebrow">WIP ≤ 3</p><h2>核心项目</h2></div><a href="/projects">管理</a></div>
+    <% if (data.activeProjects.length) { %>
+      <ul class="clean-list">
+        <% data.activeProjects.forEach((project) => { %>
+          <li><div><strong><%= project.title %></strong><small><%= project.kind %></small></div><p><%= project.current_bottleneck || '尚未记录瓶颈' %></p></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <div class="empty"><p>尚未建立核心项目。</p><a href="/projects">添加突破、建设或维护项目</a></div>
+    <% } %>
+  </article>
+</section>
+
+<section class="principle-strip">
+  <span>硬边界</span><i>→</i><span>主要矛盾</span><i>→</i><span>当前瓶颈</span><i>→</i><span>最小实践</span><i>→</i><span>结果复盘</span>
+</section>
+<%- include('partials/foot') %>

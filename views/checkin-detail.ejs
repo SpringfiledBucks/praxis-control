@@ -1,0 +1,40 @@
+<%- include('partials/head', { title }) %>
+<section class="page-heading compact">
+  <div><p class="eyebrow"><%= record.checkinDate %> · <%= record.rulesetVersion %></p><h1><%= record.mainAction %></h1><p><%= record.deliverable %></p></div>
+  <span class="status <%= record.analysis.status.toLowerCase() %>"><%= record.analysis.status %></span>
+</section>
+
+<section class="score-grid">
+  <article><span>收益</span><strong><%= record.analysis.benefitBand %></strong><small>主要矛盾 + 瓶颈</small></article>
+  <article><span>可行性</span><strong><%= record.analysis.feasibilityBand %></strong><small>资源、状态、证据取短板</small></article>
+  <article><span>风险</span><strong><%= record.analysis.riskBand %></strong><small>硬门槛优先</small></article>
+  <article><span>可用时间</span><strong><%= record.analysis.usableMinutes %>m</strong><small>已扣安全储备</small></article>
+</section>
+
+<section class="split-grid">
+  <article class="panel accent-panel"><p class="eyebrow">推荐行动</p><h2><%= record.analysis.recommendation %></h2>
+    <% if (record.analysis.reasons.length) { %><ul><% record.analysis.reasons.forEach((item) => { %><li><%= item %></li><% }) %></ul><% } %>
+    <% if (record.analysis.warnings.length) { %><div class="warning-box"><strong>需要注意</strong><ul><% record.analysis.warnings.forEach((item) => { %><li><%= item %></li><% }) %></ul></div><% } %>
+  </article>
+  <article class="panel"><p class="eyebrow">行动边界</p><dl class="detail-list"><div><dt>阶段目标</dt><dd><%= record.stageGoal %></dd></div><div><dt>主要矛盾</dt><dd><%= record.mainContradiction %></dd></div><div><dt>当前瓶颈</dt><dd><%= record.bottleneck %></dd></div><div><dt>停止条件</dt><dd><%= record.stopCondition %></dd></div><div><dt>明确不做</dt><dd><%= record.explicitNotDo || '未填写' %></dd></div></dl></article>
+</section>
+
+<section class="panel top-gap">
+  <div class="panel-heading"><div><p class="eyebrow">实践检验</p><h2>结果复盘</h2></div></div>
+  <% if (outcome) { %>
+    <div class="outcome-banner"><strong>闭环完成</strong><p><%= outcome.actual_result %></p></div>
+    <div class="score-grid compact-scores"><article><span>决策过程</span><strong><%= outcome.decision_quality %>/10</strong></article><article><span>执行质量</span><strong><%= outcome.execution_quality %>/10</strong></article><article><span>环境影响</span><strong><%= outcome.environment_impact %></strong></article></div>
+    <dl class="detail-list"><div><dt>偏差来源</dt><dd><%= outcome.variance_source %></dd></div><div><dt>得到的认识</dt><dd><%= outcome.learning %></dd></div><div><dt>下一步修正</dt><dd><%= outcome.next_adjustment %></dd></div></dl>
+  <% } else { %>
+    <form method="post" action="/checkins/<%= record.id %>/outcome" class="form-stack compact-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>实际结果<textarea name="actualResult" required></textarea></label>
+      <div class="field-grid two"><label>决策过程质量<input type="number" name="decisionQuality" min="0" max="10" value="7" required></label><label>执行质量<input type="number" name="executionQuality" min="0" max="10" value="7" required></label></div>
+      <div class="field-grid two"><label>环境影响<select name="environmentImpact"><option value="neutral">中性</option><option value="helped">有利</option><option value="hindered">阻碍</option><option value="unknown">未知</option></select></label><label>主要偏差来源<select name="varianceSource"><option value="planning">计划</option><option value="execution">执行</option><option value="environment">环境</option><option value="model">模型</option><option value="mixed">混合</option></select></label></div>
+      <label>验证或否定了什么<textarea name="learning" required></textarea></label>
+      <label>下一周期如何调整<textarea name="nextAdjustment" required></textarea></label>
+      <button class="button primary" type="submit">完成闭环</button>
+    </form>
+  <% } %>
+</section>
+<%- include('partials/foot') %>

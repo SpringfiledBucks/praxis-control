@@ -1,0 +1,8 @@
+  </main>
+  <footer class="site-footer">
+    <span>规则版本 <%= rulesetVersion %> · <%= databaseBackend %></span>
+    <span class="footer-actions"><span>人工决策保留</span><% if (shutdownToken) { %><button type="button" class="text-button" id="shutdown-button" data-token="<%= shutdownToken %>">安全关闭</button><% } %></span>
+  </footer>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

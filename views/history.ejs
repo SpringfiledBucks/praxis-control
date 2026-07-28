@@ -1,0 +1,9 @@
+<%- include('partials/head', { title }) %>
+<section class="page-heading"><div><p class="eyebrow">实践记录</p><h1>决策历史</h1><p>结果好坏不直接等于决策质量；每条记录都保留当时可获得的信息与规则版本。</p></div><a class="button primary" href="/checkins/new">新建今日决策</a></section>
+<section class="timeline">
+  <% if (!records.length) { %><div class="empty panel"><p>暂无记录。</p></div><% } %>
+  <% records.forEach((record) => { %>
+    <a class="timeline-item" href="/checkins/<%= record.id %>"><time><%= record.checkinDate %></time><span class="status <%= record.analysis.status.toLowerCase() %>"><%= record.analysis.status %></span><div><strong><%= record.mainAction %></strong><p><%= record.deliverable %></p></div><small><%= record.lifecycleStatus === 'reviewed' ? '已闭环' : '待复盘' %></small></a>
+  <% }) %>
+</section>
+<%- include('partials/foot') %>

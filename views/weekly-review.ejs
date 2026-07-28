@@ -1,0 +1,14 @@
+<%- include('partials/head', { title }) %>
+<section class="page-heading"><div><p class="eyebrow">L1 · 滚动规划</p><h1>每周复盘</h1><p>从最近七天的正式记录开始，确认主要矛盾是否变化、瓶颈是否转移。</p></div></section>
+<section class="score-grid"><article><span>决策记录</span><strong><%= summary.checkin_count || 0 %></strong></article><article><span>已闭环</span><strong><%= summary.reviewed_count || 0 %></strong></article><article><span>决策过程</span><strong><%= summary.average_decision_quality || '—' %></strong></article><article><span>执行质量</span><strong><%= summary.average_execution_quality || '—' %></strong></article></section>
+<form method="post" action="/reviews/weekly" class="panel form-stack weekly-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="weekStart" value="<%= weekStart %>"><input type="hidden" name="checkinCount" value="<%= summary.checkin_count || 0 %>"><input type="hidden" name="reviewedCount" value="<%= summary.reviewed_count || 0 %>"><input type="hidden" name="averageDecisionQuality" value="<%= summary.average_decision_quality || '' %>"><input type="hidden" name="averageExecutionQuality" value="<%= summary.average_execution_quality || '' %>">
+  <label>主要矛盾是否仍有效<textarea name="mainContradictionStatus" required><%= summary.common_contradiction || '' %></textarea></label>
+  <label>当前瓶颈<textarea name="currentBottleneck" required><%= summary.common_bottleneck || '' %></textarea></label>
+  <label>新事实、被削弱的假设或数据问题<textarea name="evidenceUpdate" required></textarea></label>
+  <label>应扩大、维持、暂停或退出什么<textarea name="portfolioChange" required></textarea></label>
+  <label>下周一个突破目标<textarea name="nextBreakthrough" required></textarea></label>
+  <button class="button primary" type="submit">保存周复盘</button>
+</form>
+<%- include('partials/foot') %>

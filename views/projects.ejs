@@ -1,0 +1,12 @@
+<%- include('partials/head', { title }) %>
+<section class="page-heading"><div><p class="eyebrow">WIP ≤ 3</p><h1>项目组合</h1><p>新项目进入核心队列前，必须说明它服务的瓶颈与退出条件。</p></div></section>
+<section class="split-grid projects-layout">
+  <article class="panel"><h2>现有项目</h2>
+    <% if (!projects.length) { %><div class="empty"><p>暂无项目。</p></div><% } %>
+    <ul class="project-list"><% projects.forEach((project) => { %><li><div class="project-main"><span class="project-kind"><%= project.kind %></span><h3><%= project.title %></h3><p><strong>瓶颈：</strong><%= project.current_bottleneck %></p><p><strong>退出：</strong><%= project.exit_condition %></p></div><form method="post" action="/projects/<%= project.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><select name="status"><% ['active','maintaining','paused','retiring','retired'].forEach((status) => { %><option value="<%= status %>" <%= project.status === status ? 'selected' : '' %>><%= status %></option><% }) %></select><button class="button small" type="submit">更新</button></form></li><% }) %></ul>
+  </article>
+  <article class="panel"><p class="eyebrow">进入规则</p><h2>添加项目</h2>
+    <form method="post" action="/projects" class="form-stack compact-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label>项目名称<input name="title" required></label><label>类型<select name="kind"><option value="breakthrough">突破</option><option value="build">建设</option><option value="maintain">维护</option><option value="explore">探索</option></select></label><label>当前瓶颈<textarea name="currentBottleneck" required></textarea></label><label>退出条件<textarea name="exitCondition" required></textarea></label><button class="button primary" type="submit">加入项目组合</button></form>
+  </article>
+</section>
+<%- include('partials/foot') %>

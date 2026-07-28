@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#13251d">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title %> · Praxis Control</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">实</span>
+      <span><strong>实践控制台</strong><small>Praxis Control</small></span>
+    </a>
+    <nav aria-label="主导航">
+      <a href="/">今日</a>
+      <a href="/history">历史</a>
+      <a href="/projects">项目</a>
+      <a href="/graph">图谱</a>
+      <a href="/reviews/weekly">周复盘</a>
+      <a href="/audit">审计</a>
+    </nav>
+  </header>
+  <main class="shell">

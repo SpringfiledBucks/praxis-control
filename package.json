@@ -1,0 +1,44 @@
+{
+  "name": "praxis-control",
+  "version": "0.1.0",
+  "private": true,
+  "description": "个人实践与决策系统：动态交互、可解释分析与审计闭环",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "migrate": "tsx src/cli/migrate.ts",
+    "seed": "tsx src/cli/seed.ts",
+    "praxis": "tsx src/cli/praxis.ts",
+    "tui": "tsx src/cli/praxis.ts tui"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.4",
+    "compression": "^1.8.1",
+    "dotenv": "^17.2.3",
+    "ejs": "^6.0.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "pg": "^8.16.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.10"
+  }
+}
