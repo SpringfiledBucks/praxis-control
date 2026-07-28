@@ -4,6 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import readline from 'node:readline/promises';
 import { loadConfig } from '../config.js';
+import { restorePGliteBackup } from '../infrastructure/backup.js';
 import { getLiveRuntimeState, type RuntimeState } from '../runtime/control.js';
 
 const config = loadConfig();
@@ -173,6 +174,18 @@ async function main(): Promise<void> {
     console.log(JSON.stringify(await api(await start(), '/api/system/backup', { method: 'POST', body: '{}' }), null, 2));
     return;
   }
+  if (command === 'restore') {
+    if (config.databaseMode !== 'pglite') throw new Error('当前 restore 命令只支持 PGlite 轻量版备份。');
+    const backupFile = option('--file');
+    const targetDirectory = option('--target');
+    if (!backupFile || !targetDirectory) throw new Error('请使用 restore --file <备份文件> --target <不存在的独立目录>。');
+    console.log(JSON.stringify(await restorePGliteBackup({
+      backupFile,
+      targetDirectory,
+      sourceDataDirectory: config.pgliteDataDir,
+    }), null, 2));
+    return;
+  }
   if (command === 'doctor') {
     const state = await runtime(false);
     console.log(JSON.stringify({
@@ -200,6 +213,8 @@ async function main(): Promise<void> {
   analyze --file FILE     分析一份 JSON 输入但不保存
   checkin --file FILE     保存一份 JSON 日常决策
   backup                  创建经过数据库接口导出的本地备份
+  restore --file F --target DIR
+                          恢复 PGlite 备份到不存在的独立目录
   doctor                  输出跨平台环境诊断
   tui                     启动终端交互界面
 `);

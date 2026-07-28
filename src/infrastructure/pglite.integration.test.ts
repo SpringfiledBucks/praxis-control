@@ -6,6 +6,7 @@ import { createApp } from '../app.js';
 import { ensureSeedData } from '../application/bootstrap.js';
 import { createProject } from '../application/projects.js';
 import { loadConfig, type AppConfig } from '../config.js';
+import { restorePGliteBackup } from './backup.js';
 import { createDatabase, type Database } from './db.js';
 import { runMigrations } from './migrations.js';
 import request from 'supertest';
@@ -41,6 +42,25 @@ describe('PGlite lightweight profile', () => {
     const backup = await database.backup?.(config.backupDir);
     expect(backup).toBeTruthy();
     expect((await stat(backup!)).size).toBeGreaterThan(0);
+
+    const restoreTarget = path.join(root, 'restored-pglite');
+    const restored = await restorePGliteBackup({
+      backupFile: backup!,
+      targetDirectory: restoreTarget,
+      sourceDataDirectory: config.pgliteDataDir,
+    });
+    expect(restored.migrations).toEqual(['001_initial', '002_knowledge_graph']);
+    expect(restored.projects).toBeGreaterThan(0);
+    await expect(restorePGliteBackup({
+      backupFile: backup!,
+      targetDirectory: config.pgliteDataDir,
+      sourceDataDirectory: config.pgliteDataDir,
+    })).rejects.toThrow('相互独立');
+    await expect(restorePGliteBackup({
+      backupFile: backup!,
+      targetDirectory: restoreTarget,
+      sourceDataDirectory: config.pgliteDataDir,
+    })).rejects.toThrow('恢复目标必须不存在');
 
     await database.close();
     database = await createDatabase(config);

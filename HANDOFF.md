@@ -1,6 +1,6 @@
 # Praxis Control 当前交接基线
 
-状态：轻量版 MVP 实施中
+状态：轻量版 MVP 第一纵向闭环已验证，继续补齐运维与跨平台验收
 
 更新：2026-07-28
 
@@ -22,6 +22,7 @@
 - macOS 暂不设计、不打包、不进入 CI；
 - Win11 小组件在核心稳定后作为轻入口；
 - NAS 当前因停电风险主动停服，不作为轻量版阻塞项。
+- NAS Gitea 是权威 Git 远端；Gitea 再同步到 GitHub，本机不直接维护双远端发布链路。
 
 ## 当前实现原则
 
@@ -42,4 +43,11 @@
 - CLI/TUI 能在 Windows/Linux 启停、诊断、读取工作台并调用 JSON API；
 - 页面与快捷命令都能安全关闭服务；
 - PGlite 数据重启后仍存在，并能生成非空备份；
+- PGlite 备份可恢复到独立目录并完成迁移、项目和决策计数校验；
 - 测试、类型检查、构建和浏览器验收通过后才标记 VERIFIED。
+
+## 当前外部状态
+
+- 2026-07-28 已只读确认 NAS、Gitea Web/API 和 Git SSH 恢复；
+- 目标仓库 `<GITEA_OWNER>/praxis-control` 尚不存在，本地没有 `origin`；
+- 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
