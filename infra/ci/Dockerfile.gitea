@@ -1,0 +1,21 @@
+FROM gitea/gitea@sha256:d8667667b4ccbd1f67b86a376bffcc0a17b16cf71309ed04e3918231776d47dd
+
+RUN sed -i s/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g /etc/apk/repositories \
+    && apk add --no-cache \
+      nodejs \
+      npm \
+      gjs \
+      gtk4.0 \
+      libadwaita \
+      libsoup3 \
+      xvfb-run \
+      dbus \
+      py3-atspi \
+      imagemagick \
+      font-noto-cjk \
+      meson \
+      ninja \
+      desktop-file-utils
+
+LABEL org.opencontainers.image.title="Praxis Control Gitea CI runtime" \
+      org.opencontainers.image.description="Node 24, GTK4 and Linux acceptance tools; no source or credentials"

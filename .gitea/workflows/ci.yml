@@ -8,11 +8,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     container:
-      image: gitea/gitea:latest
+      image: praxis-control-ci:node24-gtk4-v1
     steps:
       - uses: actions/checkout@v4
-      - name: Install Node 24 runtime
-        run: sed -i s/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g /etc/apk/repositories && apk add --no-cache nodejs npm
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
@@ -21,11 +19,9 @@ jobs:
   linux-gui-smoke:
     runs-on: ubuntu-latest
     container:
-      image: gitea/gitea:latest
+      image: praxis-control-ci:node24-gtk4-v1
     steps:
       - uses: actions/checkout@v4
-      - name: Install Node 24 and GTK test runtime
-        run: sed -i s/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g /etc/apk/repositories && apk add --no-cache nodejs npm gjs gtk4.0 libadwaita libsoup3 xvfb-run dbus py3-atspi imagemagick font-noto-cjk meson ninja desktop-file-utils
       - run: npm ci
       - run: npm run build
       - run: npm run test:linux-client
@@ -41,7 +37,7 @@ jobs:
   postgres-contract:
     runs-on: ubuntu-latest
     container:
-      image: gitea/gitea:latest
+      image: praxis-control-ci:node24-gtk4-v1
     services:
       postgres:
         image: timescale/timescaledb:latest-pg16
@@ -58,7 +54,5 @@ jobs:
       POSTGRES_TEST_URL: postgresql://praxis_test:praxis_test_password@postgres:5432/praxis_test
     steps:
       - uses: actions/checkout@v4
-      - name: Install Node 24 runtime
-        run: sed -i s/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g /etc/apk/repositories && apk add --no-cache nodejs npm
       - run: npm ci
       - run: npm run test:postgres
