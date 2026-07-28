@@ -11,6 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:linux-client": "node --test clients/linux/tests/core.test.mjs && node --check clients/linux/src/app.mjs",
+    "test:postgres": "vitest run src/infrastructure/postgres.integration.test.ts",
     "test:watch": "vitest",
     "migrate": "tsx src/cli/migrate.ts",
     "seed": "tsx src/cli/seed.ts",

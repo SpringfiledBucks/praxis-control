@@ -53,6 +53,8 @@ npm run typecheck
 npm run build
 ```
 
+真实 PostgreSQL 合同测试需要一次性测试库，并显式设置 `POSTGRES_TEST_URL` 后执行 `npm run test:postgres`；默认本机测试不会连接 NAS 数据库。
+
 当前权威交接见 `HANDOFF.md`，架构决策见 `docs/adr/`，前端视觉与交互约束见 `docs/design-system.md`。
 
 跨客户端 API 合同可在服务运行时通过 `GET /api/openapi.json` 读取；原生 GUI 技术路线见 `docs/adr/ADR-0006-native-gui-platforms.md`。

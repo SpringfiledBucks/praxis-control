@@ -19,3 +19,10 @@
 - 完成空库迁移、轻量数据导入、逐表计数与审计链对账；
 - 完成独立备份恢复演练和失败回滚；
 - 通过上述门槛前，不把现有 TimescaleDB 直接作为全量版事实库。
+
+## 已补充的隔离验证
+
+- 已增加只在 `POSTGRES_TEST_URL` 存在时执行的真实 PostgreSQL 合同测试；
+- Gitea Actions 已定义一次性 PostgreSQL 16 service，覆盖迁移幂等、事务写入、追加式审计和可移植导出；
+- 当前目标仓库与 runner 尚未建立，因此该真实 PostgreSQL CI 仍为 NOT VERIFIED；本机默认测试会明确跳过它，不把跳过报告为通过；
+- 该测试只使用一次性 CI 数据库，不连接 NAS 现有 TimescaleDB，也不需要生产凭据。
