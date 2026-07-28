@@ -56,4 +56,4 @@
 - NAS 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
 - Windows 轻量版已验证；Linux CI 运行环境尚未建立，见 `docs/status/2026-07-28-cross-platform-readiness.md`；
 - Windows WinUI 3 原生壳已在 Win11 实机通过在线、离线、刷新和安全关闭验收；Linux GTK4/libadwaita 原生壳已通过纯逻辑与语法检查，真实 GUI 保持 PARTIAL；
-- NAS PostgreSQL 当前对 LAN 与 Tailscale 暴露 5432，全量版生产接入保持 BLOCKED；一次性 PostgreSQL 16 CI 与安全迁移导入已经就绪但尚未运行真实 PostgreSQL 合同，见 `docs/status/2026-07-28-full-profile-readiness.md`。
+- NAS PostgreSQL 当前对 LAN 与 Tailscale 暴露 5432，全量版生产接入保持 BLOCKED；安全迁移导入已在无卷、回环绑定的一次性 PostgreSQL 16 中通过真实合同验收，Gitea CI 的重复执行仍等待 runner，见 `docs/status/2026-07-28-full-profile-readiness.md`。
