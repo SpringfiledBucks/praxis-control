@@ -56,16 +56,17 @@ def accessible_snapshot(root, limit=500):
     return result
 
 
-def wait_for_accessibility(timeout=12):
+def wait_for_accessibility(timeout=12, require_metrics=False):
     deadline = time.monotonic() + timeout
     latest = []
     while time.monotonic() < deadline:
         desktop = pyatspi.Registry.getDesktop(0)
         latest = accessible_snapshot(desktop)
         names = {item["name"] for item in latest}
-        if {"Praxis Control", "打开 Web", "安全关闭服务", "核心 WIP"}.issubset(names) and any(
+        controls_ready = {"Praxis Control", "打开 Web", "安全关闭服务", "核心 WIP"}.issubset(names) and any(
             name.startswith("已连接 http://127.0.0.1:") for name in names
-        ):
+        )
+        if controls_ready and (not require_metrics or "—" not in names):
             return latest
         time.sleep(0.2)
     raise AssertionError("Linux GUI accessibility tree incomplete:\n" + json.dumps(latest, ensure_ascii=False, indent=2))
@@ -159,9 +160,9 @@ try:
         stderr=subprocess.PIPE,
         text=True,
     )
-    snapshot = wait_for_accessibility()
+    snapshot = wait_for_accessibility(require_metrics=True)
     invoke_button("刷新")
-    snapshot = wait_for_accessibility(timeout=5)
+    snapshot = wait_for_accessibility(timeout=5, require_metrics=True)
     if service.poll() is not None:
         raise AssertionError("service exited while refreshing from the native GUI")
     screenshot_path.parent.mkdir(parents=True, exist_ok=True)
