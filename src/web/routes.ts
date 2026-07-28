@@ -9,6 +9,8 @@ import { createPortableExport } from '../application/export.js';
 import { verifyAuditChain } from '../infrastructure/audit.js';
 import { parseDailyBody } from './parsing.js';
 import type { Database } from '../infrastructure/db.js';
+import { API_VERSION } from '../contracts/api.js';
+import { openApiDocument } from '../contracts/openapi.js';
 
 export type SystemControl = {
   csrfToken: string;
@@ -64,7 +66,7 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.get('/api/meta', (_req, res) => {
     res.json({
-      apiVersion: 1,
+      apiVersion: API_VERSION,
       rulesetVersion,
       backend: database.backend,
       capabilities: {
@@ -78,6 +80,10 @@ export function createRouter(database: Database, rulesetVersion: string, system?
         safeShutdown: Boolean(system),
       },
     });
+  });
+
+  router.get('/api/openapi.json', (_req, res) => {
+    res.json(openApiDocument);
   });
 
   router.post('/checkins', async (req, res, next) => {

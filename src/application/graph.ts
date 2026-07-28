@@ -23,12 +23,18 @@ export async function loadKnowledgeGraph(database: Database): Promise<{ nodes: G
        ORDER BY object_type, created_at
        LIMIT 250`,
     ),
-    database.query<GraphEdge>(
+    database.query<Omit<GraphEdge, 'strength'> & { strength: number | string | null }>(
       `SELECT id, source_id, target_id, relation_type, strength
        FROM core.relations
        ORDER BY created_at
        LIMIT 500`,
     ),
   ]);
-  return { nodes: nodes.rows, edges: edges.rows };
+  return {
+    nodes: nodes.rows,
+    edges: edges.rows.map((edge) => ({
+      ...edge,
+      strength: edge.strength === null ? null : Number(edge.strength),
+    })),
+  };
 }

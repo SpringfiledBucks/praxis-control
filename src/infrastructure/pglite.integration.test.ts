@@ -11,6 +11,15 @@ import { verifyAuditChain } from './audit.js';
 import { createDatabase, type Database } from './db.js';
 import { runMigrations } from './migrations.js';
 import request from 'supertest';
+import {
+  API_VERSION,
+  auditVerificationResponseSchema,
+  dailyAnalysisResponseSchema,
+  dashboardResponseSchema,
+  graphResponseSchema,
+  metaResponseSchema,
+  portableExportResponseSchema,
+} from '../contracts/api.js';
 
 describe('PGlite lightweight profile', () => {
   let root: string;
@@ -87,8 +96,13 @@ describe('PGlite lightweight profile', () => {
       expect(response.body.backend).toBe('pglite');
     });
     await request(app).get('/api/meta').expect(200).expect((response) => {
-      expect(response.body.apiVersion).toBe(1);
-      expect(response.body.capabilities.portableExport).toBe(true);
+      const meta = metaResponseSchema.parse(response.body);
+      expect(meta.apiVersion).toBe(API_VERSION);
+      expect(meta.capabilities.portableExport).toBe(true);
+    });
+    await request(app).get('/api/openapi.json').expect(200).expect((response) => {
+      expect(response.body.info.version).toBe(`${API_VERSION}.0.0`);
+      expect(response.body.paths['/api/dashboard']).toBeTruthy();
     });
     await request(app).get('/').expect(200).expect(/实践控制台/);
     await request(app).post('/api/checkins/analyze').send({}).expect(403);
@@ -99,18 +113,22 @@ describe('PGlite lightweight profile', () => {
       .set('authorization', 'Bearer api-test-token-api-test-token-api-test-token')
       .send(input)
       .expect(200)
-      .expect((response) => expect(response.body.status).toBe('READY'));
+      .expect((response) => expect(dailyAnalysisResponseSchema.parse(response.body).status).toBe('READY'));
     await request(app)
       .post('/api/checkins')
       .set('authorization', 'Bearer api-test-token-api-test-token-api-test-token')
       .send(input)
       .expect(201);
+    await request(app).get('/api/dashboard').expect(200).expect((response) => {
+      expect(dashboardResponseSchema.parse(response.body).activeWip).toBeGreaterThan(0);
+    });
     await request(app).get('/api/graph').expect(200).expect((response) => {
-      expect(response.body.nodes.length).toBeGreaterThan(1);
+      expect(graphResponseSchema.parse(response.body).nodes.length).toBeGreaterThan(1);
     });
     await request(app).get('/api/audit/verify').expect(200).expect((response) => {
-      expect(response.body.valid).toBe(true);
-      expect(response.body.totalEvents).toBeGreaterThan(0);
+      const verification = auditVerificationResponseSchema.parse(response.body);
+      expect(verification.valid).toBe(true);
+      expect(verification.totalEvents).toBeGreaterThan(0);
     });
     await request(app).get('/api/export').expect(403);
     await request(app)
@@ -118,9 +136,10 @@ describe('PGlite lightweight profile', () => {
       .set('authorization', 'Bearer api-test-token-api-test-token-api-test-token')
       .expect((response) => {
         expect(response.status, JSON.stringify(response.body)).toBe(200);
-        expect(response.body.format).toBe('praxis-control-portable-json');
-        expect(response.body.counts.dailyCheckins).toBeGreaterThan(0);
-        expect(response.body.counts.auditEvents).toBeGreaterThan(0);
+        const snapshot = portableExportResponseSchema.parse(response.body);
+        expect(snapshot.format).toBe('praxis-control-portable-json');
+        expect(snapshot.counts.dailyCheckins).toBeGreaterThan(0);
+        expect(snapshot.counts.auditEvents).toBeGreaterThan(0);
       });
   });
 });

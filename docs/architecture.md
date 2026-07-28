@@ -26,7 +26,7 @@ Windows GUI / Linux GUI    应用用例与领域规则
 - `src/runtime`：单实例与启停控制；
 - `views` / `public`：共享 Web 客户端。
 
-客户端可通过 `GET /api/meta` 读取 API 版本、规则版本、数据库后端和能力开关；Windows/Linux GUI 不依赖页面结构推断服务能力。
+客户端可通过 `GET /api/meta` 读取 API 版本、规则版本、数据库后端和能力开关，通过 `GET /api/openapi.json` 读取机器可读合同；Windows/Linux GUI 不依赖页面结构推断服务能力。
 
 ## 不变量
 
