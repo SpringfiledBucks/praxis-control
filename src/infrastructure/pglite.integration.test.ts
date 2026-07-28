@@ -4,9 +4,10 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../app.js';
 import { ensureSeedData } from '../application/bootstrap.js';
-import { createProject } from '../application/projects.js';
+import { changeProjectStatus, createProject } from '../application/projects.js';
 import { loadConfig, type AppConfig } from '../config.js';
 import { restorePGliteBackup } from './backup.js';
+import { verifyAuditChain } from './audit.js';
 import { createDatabase, type Database } from './db.js';
 import { runMigrations } from './migrations.js';
 import request from 'supertest';
@@ -30,12 +31,17 @@ describe('PGlite lightweight profile', () => {
   });
 
   it('migrates, persists graph data and creates a non-empty backup', async () => {
-    await createProject(database, config.rulesetVersion, {
+    const projectId = await createProject(database, config.rulesetVersion, {
       title: '验证跨平台轻量闭环',
       kind: 'build',
       currentBottleneck: '嵌入式存储尚未经过持久化验证',
       exitCondition: 'PGlite 重启、备份和关系查询均通过',
     });
+    await Promise.all([
+      changeProjectStatus(database, config.rulesetVersion, projectId, 'maintaining'),
+      changeProjectStatus(database, config.rulesetVersion, projectId, 'active'),
+    ]);
+    expect(await verifyAuditChain(database)).toMatchObject({ valid: true });
     const relations = await database.query<{ count: string }>('SELECT count(*)::text AS count FROM core.relations');
     expect(Number(relations.rows[0]?.count)).toBeGreaterThan(0);
 
@@ -49,7 +55,7 @@ describe('PGlite lightweight profile', () => {
       targetDirectory: restoreTarget,
       sourceDataDirectory: config.pgliteDataDir,
     });
-    expect(restored.migrations).toEqual(['001_initial', '002_knowledge_graph']);
+    expect(restored.migrations).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads']);
     expect(restored.projects).toBeGreaterThan(0);
     await expect(restorePGliteBackup({
       backupFile: backup!,

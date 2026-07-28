@@ -117,13 +117,19 @@ export async function appendAuditEvent(
     rulesetVersion?: string;
   },
 ): Promise<void> {
-  const previous = await client.query<{ event_hash: string }>(
-    `SELECT event_hash FROM governance.audit_events
-     WHERE aggregate_type = $1 AND aggregate_id = $2
-     ORDER BY created_at DESC, id DESC LIMIT 1`,
+  await client.query(
+    `INSERT INTO governance.audit_heads (aggregate_type, aggregate_id, last_event_hash)
+     VALUES ($1, $2, NULL)
+     ON CONFLICT (aggregate_type, aggregate_id) DO NOTHING`,
     [event.aggregateType, event.aggregateId],
   );
-  const previousHash = previous.rows[0]?.event_hash ?? null;
+  const head = await client.query<{ last_event_hash: string | null }>(
+    `SELECT last_event_hash FROM governance.audit_heads
+     WHERE aggregate_type = $1 AND aggregate_id = $2
+     FOR UPDATE`,
+    [event.aggregateType, event.aggregateId],
+  );
+  const previousHash = head.rows[0]?.last_event_hash ?? null;
   const payloadJson = stableJson(event.payload);
   const eventHash = computeAuditEventHash({
     previousHash,
@@ -147,5 +153,11 @@ export async function appendAuditEvent(
       previousHash,
       eventHash,
     ],
+  );
+  await client.query(
+    `UPDATE governance.audit_heads
+     SET last_event_hash = $3, updated_at = now()
+     WHERE aggregate_type = $1 AND aggregate_id = $2`,
+    [event.aggregateType, event.aggregateId, eventHash],
   );
 }
