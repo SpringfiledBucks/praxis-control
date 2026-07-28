@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -45,6 +46,12 @@ internal sealed class PraxisApiClient : IDisposable
     public Task<GraphResponse> GetGraphAsync(CancellationToken cancellationToken = default) =>
         GetAsync<GraphResponse>("/api/graph", cancellationToken);
 
+    public Task<DailyAnalysisResponse> AnalyzeCheckinAsync(DailyInput input, CancellationToken cancellationToken = default) =>
+        PostApiAsync<DailyInput, DailyAnalysisResponse>("/api/checkins/analyze", input, cancellationToken);
+
+    public Task<CreateCheckinResponse> CreateCheckinAsync(DailyInput input, CancellationToken cancellationToken = default) =>
+        PostApiAsync<DailyInput, CreateCheckinResponse>("/api/checkins", input, cancellationToken);
+
     public async Task RequestShutdownAsync(CancellationToken cancellationToken = default)
     {
         using var response = await _http.PostAsJsonAsync(
@@ -60,6 +67,26 @@ internal sealed class PraxisApiClient : IDisposable
         using var response = await _http.GetAsync(route, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<T>(JsonOptions, cancellationToken)
+            ?? throw new InvalidDataException($"服务返回了空响应：{route}");
+    }
+
+    private async Task<TResponse> PostApiAsync<TRequest, TResponse>(
+        string route,
+        TRequest body,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, route)
+        {
+            Content = JsonContent.Create(body, options: JsonOptions),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _runtime.ApiToken);
+        using var response = await _http.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponse>(JsonOptions, cancellationToken);
+            throw new InvalidOperationException(error?.Message ?? $"请求失败：HTTP {(int)response.StatusCode}");
+        }
+        return await response.Content.ReadFromJsonAsync<TResponse>(JsonOptions, cancellationToken)
             ?? throw new InvalidDataException($"服务返回了空响应：{route}");
     }
 
@@ -94,3 +121,44 @@ internal sealed record GraphEdge(
     [property: JsonPropertyName("target_id")] string TargetId,
     [property: JsonPropertyName("relation_type")] string RelationType,
     double? Strength);
+
+internal sealed record DailyInput(
+    string CheckinDate,
+    int AvailableMinutes,
+    int ReservePercent,
+    int Energy,
+    int Attention,
+    string StageGoal,
+    string MainContradiction,
+    string Bottleneck,
+    string MainAction,
+    string Deliverable,
+    int EstimatedMinutes,
+    string StopCondition,
+    string ExplicitNotDo,
+    int ContradictionContribution,
+    int BottleneckContribution,
+    int EvidenceStrength,
+    string RiskLevel,
+    bool HasAuthorization,
+    bool LossTolerable,
+    bool HasRecoveryPlan,
+    bool OpensNewCoreProject,
+    int ActiveWip);
+
+internal sealed record DailyAnalysisResponse(
+    string Status,
+    int UsableMinutes,
+    string CapacityBand,
+    string BenefitBand,
+    string FeasibilityBand,
+    string RiskBand,
+    string Recommendation,
+    IReadOnlyList<string> Reasons,
+    IReadOnlyList<string> Warnings,
+    IReadOnlyList<string> TriggeredRules,
+    IReadOnlyList<string> Assumptions,
+    string NextReviewTrigger);
+
+internal sealed record CreateCheckinResponse(string Status, string Id);
+internal sealed record ErrorResponse(string Status, string Message);

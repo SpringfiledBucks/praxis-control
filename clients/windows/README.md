@@ -1,6 +1,6 @@
 # Windows 原生客户端
 
-技术栈：C#、.NET 8、WinUI 3、Windows App SDK。当前是框架依赖、非 MSIX 的开发期原生壳，不写数据库，只读取本机运行时状态并调用 API v1。
+技术栈：C#、.NET 8、WinUI 3、Windows App SDK。当前是框架依赖、非 MSIX 的开发期原生客户端，不写数据库，只调用 API v1。除工作台外，已提供“先分析、再确认保存”的原生日常决策窗口。
 
 ## 构建
 

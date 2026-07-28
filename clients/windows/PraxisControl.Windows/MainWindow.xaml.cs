@@ -10,6 +10,7 @@ namespace PraxisControl.Windows;
 public sealed partial class MainWindow : Window, INotifyPropertyChanged
 {
     private PraxisApiClient? _client;
+    private CheckinWindow? _checkinWindow;
     private bool _isConnected;
     private string _statusText = "正在连接本机服务…";
     private string _activeWip = "—";
@@ -47,6 +48,19 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (_client is null) return;
         Process.Start(new ProcessStartInfo(_client.ServiceUrl) { UseShellExecute = true });
+    }
+
+    private void NewCheckin_Click(object sender, RoutedEventArgs e)
+    {
+        if (_client is null) return;
+        if (_checkinWindow is not null)
+        {
+            _checkinWindow.Activate();
+            return;
+        }
+        _checkinWindow = new CheckinWindow(_client, ParseActiveWip(), RefreshAsync);
+        _checkinWindow.Closed += (_, _) => _checkinWindow = null;
+        _checkinWindow.Activate();
     }
 
     private async void Shutdown_Click(object sender, RoutedEventArgs e)
@@ -111,6 +125,8 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             ? action.GetString() ?? "尚无日常决策记录"
             : "尚无日常决策记录";
     }
+
+    private int ParseActiveWip() => int.TryParse(ActiveWip.Split('/')[0].Trim(), out var value) ? value : 0;
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
