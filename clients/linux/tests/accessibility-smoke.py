@@ -71,6 +71,27 @@ def wait_for_accessibility(timeout=12):
     raise AssertionError("Linux GUI accessibility tree incomplete:\n" + json.dumps(latest, ensure_ascii=False, indent=2))
 
 
+def find_button(name):
+    desktop = pyatspi.Registry.getDesktop(0)
+    pending = [desktop]
+    while pending:
+        node = pending.pop(0)
+        try:
+            if node.name == name and node.getRoleName() == "button":
+                return node
+            pending.extend(node.getChildAtIndex(index) for index in range(node.childCount))
+        except Exception:
+            continue
+    raise AssertionError(f"accessible button not found: {name}")
+
+
+def invoke_button(name):
+    button = find_button(name)
+    action = button.queryAction()
+    if action.nActions < 1 or not action.doAction(0):
+        raise AssertionError(f"accessible button action failed: {name}")
+
+
 def capture_root_window(target):
     import_command = shutil.which("import")
     if import_command:
@@ -139,18 +160,14 @@ try:
         text=True,
     )
     snapshot = wait_for_accessibility()
+    invoke_button("刷新")
+    snapshot = wait_for_accessibility(timeout=5)
+    if service.poll() is not None:
+        raise AssertionError("service exited while refreshing from the native GUI")
     screenshot_path.parent.mkdir(parents=True, exist_ok=True)
     capture_root_window(screenshot_path)
 
-    request = urllib.request.Request(
-        f"{runtime['url']}/api/system/shutdown",
-        data=json.dumps({"token": runtime["shutdownToken"]}).encode("utf-8"),
-        headers={"content-type": "application/json"},
-        method="POST",
-    )
-    with urllib.request.urlopen(request, timeout=5) as response:
-        if response.status != 200:
-            raise AssertionError(f"shutdown returned HTTP {response.status}")
+    invoke_button("安全关闭服务")
     service.wait(timeout=12)
     if service.returncode != 0:
         raise AssertionError(f"Praxis service exited with {service.returncode}")
