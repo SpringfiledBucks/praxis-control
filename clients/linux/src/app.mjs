@@ -179,10 +179,30 @@ class PraxisWindow extends Adw.ApplicationWindow {
 });
 
 const smokeTest = ARGV.includes('--smoke-test');
+const connectedSmokeTest = ARGV.includes('--smoke-test-connected');
+let smokeFailure = null;
 const application = new Adw.Application({ application_id: APP_ID, flags: Gio.ApplicationFlags.DEFAULT_FLAGS });
 application.connect('activate', (app) => {
   const window = new PraxisWindow(app);
   window.present();
-  if (smokeTest) GLib.timeout_add(GLib.PRIORITY_DEFAULT, 800, () => { app.quit(); return GLib.SOURCE_REMOVE; });
+  if (connectedSmokeTest) {
+    const deadline = GLib.get_monotonic_time() + 5 * GLib.TIME_SPAN_SECOND;
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+      if (window._client) {
+        print('PRAXIS_GUI_SMOKE_CONNECTED');
+        app.quit();
+        return GLib.SOURCE_REMOVE;
+      }
+      if (GLib.get_monotonic_time() >= deadline) {
+        smokeFailure = `Linux GUI 未在 5 秒内连接 API：${window._status.title}`;
+        app.quit();
+        return GLib.SOURCE_REMOVE;
+      }
+      return GLib.SOURCE_CONTINUE;
+    });
+  } else if (smokeTest) {
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 800, () => { app.quit(); return GLib.SOURCE_REMOVE; });
+  }
 });
-application.run(ARGV.filter((argument) => argument !== '--smoke-test'));
+application.run(ARGV.filter((argument) => !['--smoke-test', '--smoke-test-connected'].includes(argument)));
+if (smokeFailure) throw new Error(smokeFailure);
