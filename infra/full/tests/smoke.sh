@@ -48,6 +48,7 @@ openssl rand -hex 32 >"$admin_secret"
 openssl rand -hex 32 >"$application_secret"
 chmod 0444 "$admin_secret" "$application_secret"
 
+sh "$script_dir/credential-guard.sh"
 docker build --network host -t "$application_image" -f "$full_dir/Dockerfile" "$repo_root" >/dev/null
 docker network create --internal "$backend_network" >/dev/null
 docker network create "$edge_network" >/dev/null

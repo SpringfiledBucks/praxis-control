@@ -15,7 +15,7 @@
 
 ## 准备
 
-需要 Docker Engine、可工作的 Docker Compose，以及 `openssl`。创建部署主机本地密钥：
+需要 Docker Engine、`curl` 和 `openssl`；当前 NAS 不依赖已损坏的 Compose v1 运行时。创建部署主机本地密钥：
 
 ```sh
 cd infra/full
@@ -31,19 +31,20 @@ cp .env.example .env
 ## 启停
 
 ```sh
-docker compose --project-name praxis-control-full -f compose.yml config --quiet
-docker compose --project-name praxis-control-full -f compose.yml up --build -d
-docker compose --project-name praxis-control-full -f compose.yml ps
-curl --fail http://127.0.0.1:4310/health
+sh manage.sh preflight
+sh manage.sh start
+sh manage.sh status
 ```
 
 停止应用而保留事实库：
 
 ```sh
-docker compose --project-name praxis-control-full -f compose.yml down
+sh manage.sh stop
 ```
 
-不要对正式环境执行 `down --volumes`。数据库卷删除只允许在已验证备份、明确目标和恢复路径后单独审批。
+`manage.sh` 通过固定名称和 `io.praxiscontrol.stack` 标签确认资源所有权；名称冲突但标签不匹配时拒绝操作。重复 `start` 会先向应用和 PostgreSQL 发送正常停止信号，再重建容器并保留命名数据库卷；已有决策和审计必须仍可读取。脚本记录两份数据库密码的 SHA-256 指纹；密码变化时在容器变更前拒绝隐式轮换，不会覆盖正在使用的运行时密码副本，也不会停止或移除现有容器。
+
+`compose.yml` 保留为声明式参考和 Compose v2 环境入口，但不是当前 NAS 的运行依赖。数据库卷删除没有封装成日常命令；只能在已验证备份、明确目标和恢复路径后单独审批。
 
 ## 跨设备入口
 
@@ -55,7 +56,7 @@ docker compose --project-name praxis-control-full -f compose.yml down
 sh backup.sh /secure/backup/praxis-control
 ```
 
-脚本以应用角色生成 custom-format dump，拒绝覆盖，检查非空并运行 `pg_restore --list`。正式切换前还必须在独立数据库完成恢复、逐表计数和审计链验证；只验证归档目录不等于完成恢复演练。
+该入口委托给 `manage.sh backup`，以应用角色生成 custom-format dump，拒绝覆盖，检查非空并运行 `pg_restore --list`。正式切换前还必须在独立数据库完成恢复、逐表计数和审计链验证；只验证归档目录不等于完成恢复演练。
 
 ## 隔离验收
 
@@ -67,5 +68,6 @@ sh backup.sh /secure/backup/praxis-control
 - Tailscale 身份缺失/错误时 401，允许身份可访问；
 - PostgreSQL 写入、审计链、custom dump 和独立数据库恢复均有效；
 - 恢复副本由真实应用重新读取并复核审计链。
+- 预存密码指纹与新密码不一致时，生命周期入口拒绝启动且不改写运行时密码副本。
 
 结束时脚本删除全部临时容器、网络、卷、镜像、密码和 dump。它不会连接或修改现有业务 PostgreSQL。
