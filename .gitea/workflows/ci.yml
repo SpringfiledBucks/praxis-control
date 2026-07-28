@@ -28,11 +28,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
       - run: npm run test:linux-client
       - name: Install GTK runtime for headless smoke test
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gjs gir1.2-adw-1 gir1.2-gtk-4.0 gir1.2-soup-3.0 xvfb xauth dbus-x11
       - name: Launch GTK shell under Xvfb
         run: npm run test:linux-gui-connected
+      - name: Connect GTK shell to a real PGlite service
+        run: npm run test:linux-gui-real-service
 
   postgres-contract:
     runs-on: ubuntu-latest
