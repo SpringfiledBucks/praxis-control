@@ -33,9 +33,11 @@ praxis restore --file <备份.tgz> --target <独立目录>
 
 NAS 已于 2026-07-28 完成主机、Gitea Web/API 与 Git SSH 的只读恢复确认。全量版应用、证书、认证、PostgreSQL、备份恢复和访问边界仍须分别验收，不直接把轻量数据切换过去。
 
+隔离容器基线位于 `infra/full/`：PostgreSQL 不发布端口，应用仅发布到主机 `127.0.0.1:4310`，密码通过 secret 文件提供，并要求认证代理注入匹配的 Tailscale 用户身份。NAS 隔离验收已覆盖真实写入、审计、备份和独立恢复；当前 Headscale/HTTPS 与生产暴露面仍未满足上线门槛，详见 `docs/status/2026-07-29-full-profile-container.md`。
+
 ## Git 远端
 
-本地仓库的权威远端是 NAS Gitea，GitHub 由 Gitea 侧同步。当前目标仓库尚未创建；创建后先验证仓库地址和同步方向，再添加本地远端并推送当前 `main`。
+本地仓库的权威远端是 NAS Gitea `<GITEA_OWNER>/praxis-control`，GitHub 由 Gitea 侧同步。本地只保留 Gitea `origin`；GitHub 空仓库与推送镜像仍待配置。
 
 ## 提升迁移
 

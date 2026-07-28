@@ -142,4 +142,21 @@ describe('PGlite lightweight profile', () => {
         expect(snapshot.counts.auditEvents).toBeGreaterThan(0);
       });
   });
+
+  it('enforces the configured Tailscale identity before serving full-profile data', async () => {
+    const app = createApp(database, {
+      ...config,
+      accessMode: 'tailscale',
+      tailscaleAllowedUser: 'owner@example.com',
+    });
+
+    await request(app).get('/health').expect(200);
+    await request(app).get('/').expect(401).expect(/访问未授权/);
+    await request(app).get('/api/dashboard').expect(401).expect({ status: 'error', message: '未通过 Tailscale 身份校验。' });
+    await request(app).get('/api/dashboard').set('tailscale-user-login', 'intruder@example.com').expect(401);
+    await request(app)
+      .get('/api/dashboard')
+      .set('tailscale-user-login', 'Owner@Example.COM')
+      .expect(200);
+  });
 });

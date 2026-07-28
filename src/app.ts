@@ -22,6 +22,15 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.use(compression());
   app.use(express.urlencoded({ extended: true, limit: '256kb' }));
   app.use(express.json({ limit: '256kb' }));
+  app.use((req, res, next) => {
+    if (config.accessMode !== 'tailscale' || req.path === '/health') return next();
+    const identity = req.get('tailscale-user-login')?.trim().toLowerCase();
+    if (identity === config.tailscaleAllowedUser) return next();
+    if (req.path.startsWith('/api/')) {
+      return res.status(401).json({ status: 'error', message: '未通过 Tailscale 身份校验。' });
+    }
+    return res.status(401).render('error', { title: '访问未授权', message: '当前 Tailscale 身份不在允许列表中。' });
+  });
   app.use('/static', express.static(path.join(process.cwd(), 'public'), { maxAge: config.nodeEnv === 'production' ? '1d' : 0 }));
   app.use((req, res, next) => {
     if (req.method !== 'POST' || !system) return next();

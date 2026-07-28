@@ -1,0 +1,15 @@
+.git
+.gitea
+.github
+.tmp
+node_modules
+dist
+coverage
+clients
+docs
+infra/full/secrets
+*.tar
+*.log
+*.zip
+*.docx
+*.xlsx

@@ -56,4 +56,4 @@
 - NAS 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
 - Windows 轻量版已验证；Linux GTK 已在 NAS 一次性环境通过真实 PGlite 服务、原生按钮动作、AT-SPI、中文截图和 Meson 安装后启动验收，当前 MVP 范围为 VERIFIED，见 `docs/status/2026-07-28-linux-gui.md`；
 - Windows WinUI 3 原生壳已在 Win11 实机通过在线、离线、刷新和安全关闭验收；原生日常决策窗口已实现并通过构建，端到端表单保存仍待无输入冲突时复验；
-- NAS PostgreSQL 当前对 LAN 与 Tailscale 暴露 5432，全量版生产接入保持 BLOCKED；安全迁移导入已在无卷、回环绑定的一次性 PostgreSQL 16 及 Gitea CI 的一次性 service 中通过真实合同验收，见 `docs/status/2026-07-28-full-profile-readiness.md`。
+- 全量版隔离容器已通过最低权限角色、secret、回环发布、身份拒绝、真实写入、审计、备份和独立恢复验收，见 `docs/status/2026-07-29-full-profile-container.md`；NAS 现有 PostgreSQL 仍对 LAN/Tailscale 暴露 5432，Compose v1 运行时已损坏，且尚无可用 HTTPS/认证代理，因此生产接入保持 BLOCKED。
