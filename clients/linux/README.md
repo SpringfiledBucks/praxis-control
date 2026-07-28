@@ -20,6 +20,8 @@ xvfb-run -a dbus-run-session -- npm run test:linux-gui-accessibility
 xvfb-run -a dbus-run-session -- npm run test:linux-package
 ```
 
+Alpine/BusyBox 环境应使用 `clients/linux/tests/run-with-xvfb.sh` 包裹上述命令；该脚本直接管理 Xvfb 生命周期，避免发行版 `xvfb-run` 对 shell 信号语义的差异。
+
 连接型模拟验收命令会启动隔离的本机模拟 API，要求 GTK 窗口在 5 秒内完成 API v1、工作台与图谱读取；仅创建出窗口但未连接服务不会通过。
 
 真实服务验收命令会使用临时 PGlite 数据目录启动编译后的 Praxis Control 服务，要求 GTK 客户端完成连接，再经服务关闭 API 安全退出并确认运行时状态文件已移除。

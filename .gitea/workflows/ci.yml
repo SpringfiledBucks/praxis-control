@@ -8,9 +8,11 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     container:
-      image: node:24-bookworm
+      image: gitea/gitea:latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Node 24 runtime
+        run: sed -i s/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g /etc/apk/repositories && apk add --no-cache nodejs npm
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
@@ -19,30 +21,30 @@ jobs:
   linux-gui-smoke:
     runs-on: ubuntu-latest
     container:
-      image: node:24-bookworm
+      image: gitea/gitea:latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Node 24 and GTK test runtime
+        run: sed -i s/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g /etc/apk/repositories && apk add --no-cache nodejs npm gjs gtk4.0 libadwaita libsoup3 xvfb-run dbus py3-atspi imagemagick font-noto-cjk meson ninja desktop-file-utils
       - run: npm ci
       - run: npm run build
       - run: npm run test:linux-client
-      - name: Install GTK runtime for headless smoke test
-        run: apt-get update && apt-get install -y --no-install-recommends gjs gir1.2-adw-1 gir1.2-gtk-4.0 gir1.2-soup-3.0 xvfb xauth dbus-x11 python3-pyatspi imagemagick fonts-noto-cjk meson ninja-build desktop-file-utils
       - name: Launch GTK shell under Xvfb
-        run: npm run test:linux-gui-connected
+        run: clients/linux/tests/run-with-xvfb.sh npm run test:linux-gui-connected
       - name: Connect GTK shell to a real PGlite service
-        run: npm run test:linux-gui-real-service
+        run: clients/linux/tests/run-with-xvfb.sh npm run test:linux-gui-real-service
       - name: Verify GTK accessibility tree and screenshot
-        run: xvfb-run -a dbus-run-session -- npm run test:linux-gui-accessibility
+        run: clients/linux/tests/run-with-xvfb.sh dbus-run-session -- npm run test:linux-gui-accessibility
       - name: Install and launch the Meson package
-        run: xvfb-run -a dbus-run-session -- npm run test:linux-package
+        run: clients/linux/tests/run-with-xvfb.sh dbus-run-session -- npm run test:linux-package
 
   postgres-contract:
     runs-on: ubuntu-latest
     container:
-      image: node:24-bookworm
+      image: gitea/gitea:latest
     services:
       postgres:
-        image: postgres:16
+        image: timescale/timescaledb:latest-pg16
         env:
           POSTGRES_USER: praxis_test
           POSTGRES_PASSWORD: praxis_test_password
@@ -56,5 +58,7 @@ jobs:
       POSTGRES_TEST_URL: postgresql://praxis_test:praxis_test_password@postgres:5432/praxis_test
     steps:
       - uses: actions/checkout@v4
+      - name: Install Node 24 runtime
+        run: sed -i s/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g /etc/apk/repositories && apk add --no-cache nodejs npm
       - run: npm ci
       - run: npm run test:postgres
