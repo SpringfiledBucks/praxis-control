@@ -3,3 +3,4 @@
 *.yml text eol=lf
 *.yaml text eol=lf
 *.ps1 text eol=crlf
+clients/linux/** text eol=lf
