@@ -14,4 +14,4 @@
 
 ## 结果
 
-开发机只有一个明确的发布目标，GitHub 作为异地副本和外部协作入口。Gitea 到 GitHub 的具体推送镜像或双向同步模式，在 NAS 恢复后单独验收。
+开发机只有一个明确的发布目标，GitHub 作为异地副本和外部协作入口。2026-07-29 已建立 Gitea 到 GitHub 的单向 SSH 镜像：Gitea 1.26 不支持 SSH push mirror，因此使用官方文档给出的 `post-receive` 扩展点，并通过单仓库 Deploy Key、固定 GitHub 主机密钥、互斥锁、超时、有限重试、状态文件和日志完成验收。GitHub 不作为双主写入端。

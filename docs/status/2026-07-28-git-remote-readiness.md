@@ -1,37 +1,46 @@
 # Git 远端与镜像状态
 
-状态：PARTIAL（Gitea 已验证，GitHub 镜像待配置）
+状态：VERIFIED（Gitea 权威远端与 GitHub 单向镜像）
 
 更新：2026-07-29
 
-## 已完成
+## 拓扑
 
-- NAS Gitea 1.26.1 私有仓库 `<GITEA_OWNER>/praxis-control` 已建立，默认分支为 `main`；
-- 本地唯一 `origin` 已设置为 `ssh://git@<NAS_LAN_IP>:2222/<GITEA_OWNER>/praxis-control.git`，本机不直接向 GitHub 双写；
-- 最近一次功能基线提交为 `72d0ecf9d03b080c51786d4a54b3a23213292686`，当次本地 `main`、`origin/main` 与 Gitea `refs/heads/main` 已对齐；
-- Gitea Actions runner v0.2.11 已运行，标签为 `ubuntu-latest, linux`；
-- Gitea Actions run 68 已在权威提交上完成，`verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部成功；
-- CI 使用 NAS 本地镜像 `praxis-control-ci:node24-gtk4-v1`，固定基础镜像 digest，并包含 Node 24、GTK4/GJS、AT-SPI、Noto CJK、Meson 和桌面校验工具；镜像不包含仓库源码或凭据；
-- 工作流按 `${{ github.sha }}` 检出权威提交，临时作业令牌只作为单条 Git 命令的请求头使用，不写入 remote URL 或 Git 配置；
-- PostgreSQL 合同作业使用一次性 `timescale/timescaledb:latest-pg16` service，不连接现有 NAS 业务数据库。
+- 权威仓库：NAS Gitea 私有仓库 `<GITEA_OWNER>/praxis-control`；
+- 异地镜像：GitHub 私有仓库 `SpringfiledBucks/praxis-control`；
+- 开发机仅保留 Gitea `origin`：`ssh://git@<NAS_LAN_IP>:2222/<GITEA_OWNER>/praxis-control.git`；
+- GitHub 不作为双主写入端，不要求开发机双写。
 
-详细证据见 `docs/status/2026-07-29-gitea-ci.md`。
+## 镜像实现
 
-## 尚未完成
+- GitHub 使用名为 `Gitea Praxis Control mirror` 的 SSH Deploy Key，权限限定为该单一仓库并允许写入；
+- 私钥只存在于 Gitea 容器 `/data/git/.ssh/praxis_control_mirror_ed25519`，权限为 `0600`，不进入仓库；
+- SSH 通过 `ssh.github.com:443`，`known_hosts` 来自 GitHub 官方 Meta API；ED25519、ECDSA 和 RSA 指纹均经 `ssh-keygen` 与官方值核对；
+- Gitea 1.26 不支持 SSH push mirror，因此使用官方文档给出的 `post-receive` 扩展点；
+- hook 在后台执行，仅同步 `refs/heads/*` 和 `refs/tags/*`，不推送 Gitea 内部引用；
+- 同步具备 `flock` 互斥、单次 120 秒超时、最多 3 次尝试、状态原子写入和 1 MiB 日志轮转；
+- 状态与日志位于 `/data/git/.local/state/praxis-control-github-mirror/`；仓库内可审计源文件位于 `infra/git-mirror/`。
 
-- 已连接的 GitHub 所有者为 `SpringfiledBucks`，但 `SpringfiledBucks/praxis-control` 尚不存在；
-- 当前 GitHub 连接器不提供创建仓库能力；应用内浏览器没有 GitHub 登录会话，本机也没有可用的 Chrome 或 `gh` CLI；
-- 因目标仓库与最小权限凭据均不存在，Gitea 到 GitHub 的推送镜像尚未配置，镜像 commit SHA 和失败告警均为 NOT VERIFIED。
-- NAS Gitea 数据库只读核验显示仓库 id 15 的 `push_mirror` 记录数为 0；未读取或输出任何凭据字段。
+## 验收证据
 
-## 需要一次性人工完成
+- GitHub 仓库已在 UI 确认为 `Private`；
+- Deploy Key 已在 UI 确认为 `Read/write`，指纹为 `SHA256:P0A9ALMhIZISVWYRJ7khClpXxAaA73naEEQA/hXrpuM`；
+- Gitea 容器通过该密钥成功认证 GitHub，并可读取空仓库；
+- 首次手动镜像后，本地 `HEAD`、Gitea `main` 与 GitHub `main` 均为 `69af26c4c19333ff78b83862ce4cc6ee12446736`；
+- 安装 hook 后向 Gitea 推送提交 `b7e1ad7cc336880d37dd709e3fdb484cc3acba9d`，状态文件自动记录 `result=success`，源端和 GitHub 远端 SHA 完全一致；
+- Gitea 内置 `push_mirror` 记录数保持为 0；当前同步由 SSH hook 管理，不保存 GitHub PAT；
+- Gitea Actions run 69 在前一提交上完成 `verify`、`linux-gui-smoke` 和 `postgres-contract`，三项均成功。
 
-1. 在 GitHub UI 创建私有空仓库 `SpringfiledBucks/praxis-control`，不要初始化 README、License 或 `.gitignore`；
-2. 在 Gitea 仓库设置中添加到该 GitHub 仓库的“推送镜像”，并仅在 Gitea UI 内录入最小权限凭据；凭据不得发送到对话或写入本仓库；
-3. 完成后验收镜像方向、GitHub `main` commit SHA、后续推送同步和失败告警。
+## 安全事件与处置
 
-## 安全与审计记录
+- 初始尝试按 Gitea 官方 HTTPS push mirror 方式使用单仓库 GitHub fine-grained PAT；
+- Gitea 1.26 会把带凭据的 HTTPS remote URL 传给 `git-remote-https` 进程参数，诊断输出因此暴露了该令牌；
+- 发现后立即停止同步进程、在 GitHub 撤销令牌、删除 Gitea push mirror，并复核 `push_mirror` 记录数为 0、相关 Git 进程不存在；
+- 随后改用 SSH Deploy Key，当前运行路径和进程参数均不含访问令牌；
+- 泄露令牌已失效且从 Gitea 配置移除，不得恢复或复用。
 
-- 建仓使用了一次性、最小范围的 Gitea 临时令牌；API 自撤销未成功后，仅按令牌 id、用户 id、名称和 scope 四项条件删除对应数据库记录，并复核目标记录为 0、令牌总数恢复；未保留令牌，未改动其他令牌；
-- 不开启实例级 push-to-create，不把凭据写入仓库，不让开发机承担双远端发布；
-- 历史 run 59 因早期工作流包含当前 runner 不支持的 `windows-latest` 作业，界面仍显示等待；相关执行已停止且不占用 runner。保留该记录用于审计，不直接修改 Actions 数据表。
+## 外部限制
+
+- GitHub Actions 已识别 `quality` 工作流，但账户计费当前被锁定；runs `30410651519` 和 `30410926030` 均为启动阶段失败，页面明确要求更新付款信息；
+- 这不是代码、依赖或工作流执行失败。在账户侧恢复前，Windows GitHub runner 验收保持 BLOCKED；
+- Gitea Actions 仍是当前可执行的权威 CI，且不受该 GitHub 账户状态影响。
