@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+set -u
+
+readonly SYNC_SCRIPT="/data/git/.local/share/praxis-control-github-mirror/github-mirror-sync.sh"
+
+if [ ! -x "${SYNC_SCRIPT}" ]; then
+  exit 0
+fi
+
+nohup "${SYNC_SCRIPT}" </dev/null >/dev/null 2>&1 &
+exit 0
