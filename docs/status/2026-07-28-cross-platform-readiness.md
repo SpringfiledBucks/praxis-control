@@ -9,7 +9,7 @@
 - Windows 11：Node.js 24、PGlite、Web、CLI、TUI、启停、备份、恢复、导出和审计链校验；
 - Windows WinUI 3 原生壳已完成在线、离线、刷新和安全关闭验收，原生日常决策表单已通过构建；
 - Linux GTK4/libadwaita 原生壳已在隔离 Linux 环境连接真实 PGlite 服务，完成 API、AT-SPI、截图、刷新、安全关闭和 Meson 安装后启动验收；
-- Gitea Actions run 72 已在 NAS Linux runner 完成 `verify`、`linux-gui-smoke` 和 `postgres-contract` 三个作业；
+- Gitea Actions run 73 已在 NAS Linux runner 完成 `verify`、`linux-gui-smoke` 和 `postgres-contract` 三个作业；
 - CI/CD 权威入口为 Gitea Actions；GitHub 仅作私有镜像，不运行 Actions。
 
 ## 当前边界

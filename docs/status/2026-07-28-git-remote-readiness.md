@@ -42,6 +42,6 @@
 ## CI/CD 边界
 
 - GitHub 仅作为私有镜像，不承担 Actions 或发布任务；
-- 早期镜像提交曾让 GitHub 识别 `quality` 工作流，runs `30410651519` 和 `30410926030` 因账户状态在启动阶段失败，未执行任何代码；
+- 早期四次镜像提交曾让 GitHub 识别 `quality` 工作流，runs `#1`–`#4` 均因账户状态在启动阶段失败，未执行任何代码；
 - 明确镜像边界后已删除 `.github/workflows/ci.yml`，后续镜像提交不再触发 GitHub Actions；
 - Gitea Actions 是项目唯一权威 CI/CD 入口，NAS runner 持续执行 `verify`、`linux-gui-smoke` 和 `postgres-contract`。
