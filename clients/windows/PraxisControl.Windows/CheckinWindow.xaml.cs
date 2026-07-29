@@ -21,9 +21,16 @@ public sealed partial class CheckinWindow : Window
         InitializeComponent();
         AppWindow.Resize(new global::Windows.Graphics.SizeInt32(1000, 820));
         CheckinDate.Date = DateTimeOffset.Now;
+        if (Environment.GetEnvironmentVariable("PRAXIS_WINDOWS_E2E_AUTOSUBMIT") == "1")
+        {
+            EnsureE2EDataDirectory();
+            RootLayout.Loaded += RunE2EAsync;
+        }
     }
 
-    private async void Analyze_Click(object sender, RoutedEventArgs e)
+    private async void Analyze_Click(object sender, RoutedEventArgs e) => await AnalyzeAsync();
+
+    private async Task<bool> AnalyzeAsync()
     {
         SetBusy(true, "正在执行规则分析…");
         try
@@ -43,10 +50,12 @@ public sealed partial class CheckinWindow : Window
             ResultBar.IsOpen = true;
             SaveButton.IsEnabled = true;
             FooterStatus.Text = "分析完成；请确认输入未改变后保存。";
+            return true;
         }
         catch (Exception error)
         {
             ShowError(error.Message);
+            return false;
         }
         finally
         {
@@ -54,7 +63,9 @@ public sealed partial class CheckinWindow : Window
         }
     }
 
-    private async void Save_Click(object sender, RoutedEventArgs e)
+    private async void Save_Click(object sender, RoutedEventArgs e) => await SaveAsync();
+
+    private async Task<bool> SaveAsync()
     {
         SetBusy(true, "正在写入事实库…");
         try
@@ -73,14 +84,62 @@ public sealed partial class CheckinWindow : Window
             SaveButton.IsEnabled = false;
             FooterStatus.Text = "保存成功，可关闭窗口。";
             await _onSaved();
+            return true;
         }
         catch (Exception error)
         {
             ShowError(error.Message);
+            return false;
         }
         finally
         {
             SetBusy(false, FooterStatus.Text);
+        }
+    }
+
+    private async void RunE2EAsync(object sender, RoutedEventArgs e)
+    {
+        RootLayout.Loaded -= RunE2EAsync;
+        try
+        {
+            StageGoal.Text = "交付轻量版";
+            MainContradiction.Text = "原生客户端缺少可重复闭环证据";
+            Bottleneck.Text = "人工输入会被桌面活动打断";
+            MainAction.Text = "验证 Windows 原生表单闭环";
+            Deliverable.Text = "一条可审计的原生日常决策";
+            StopCondition.Text = "分析、保存和主窗口刷新均成功";
+            ExplicitNotDo.Text = "不写入默认用户数据目录";
+            HasAuthorization.IsChecked = true;
+            HasRecoveryPlan.IsChecked = true;
+
+            if (!await AnalyzeAsync()) throw new InvalidOperationException("原生表单自动分析失败。");
+            if (!SaveButton.IsEnabled) throw new InvalidOperationException("分析成功后保存按钮未启用。");
+            if (!await SaveAsync()) throw new InvalidOperationException("原生表单自动保存失败。");
+
+            Title = "E2E SAVED - Praxis Control";
+        }
+        catch (Exception error)
+        {
+            App.LogException("checkin-e2e", error);
+            Title = "E2E FAILED - Praxis Control";
+            ShowError(error.Message);
+        }
+    }
+
+    private static void EnsureE2EDataDirectory()
+    {
+        var configuredDataDirectory = Environment.GetEnvironmentVariable("PRAXIS_DATA_DIR");
+        if (string.IsNullOrWhiteSpace(configuredDataDirectory))
+        {
+            throw new InvalidOperationException("Windows E2E automation requires an isolated data directory.");
+        }
+
+        var dataDirectory = Path.GetFullPath(configuredDataDirectory);
+        var testRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "PraxisControlE2E"));
+        var testRootPrefix = testRoot + Path.DirectorySeparatorChar;
+        if (!dataDirectory.StartsWith(testRootPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Windows E2E automation is restricted to the system test directory.");
         }
     }
 

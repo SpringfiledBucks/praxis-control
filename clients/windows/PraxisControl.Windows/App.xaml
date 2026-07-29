@@ -4,6 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Application.Resources>
     <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+      </ResourceDictionary.MergedDictionaries>
       <Color x:Key="PraxisInk">#24312D</Color>
       <Color x:Key="PraxisMuted">#65736D</Color>
       <Color x:Key="PraxisAccent">#6E806F</Color>

@@ -40,6 +40,10 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     {
         Activated -= MainWindow_Activated;
         await RefreshAsync();
+        if (Environment.GetEnvironmentVariable("PRAXIS_WINDOWS_E2E_OPEN_CHECKIN") == "1")
+        {
+            OpenCheckinWindow();
+        }
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshAsync();
@@ -52,15 +56,29 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 
     private void NewCheckin_Click(object sender, RoutedEventArgs e)
     {
+        OpenCheckinWindow();
+    }
+
+    private void OpenCheckinWindow()
+    {
         if (_client is null) return;
-        if (_checkinWindow is not null)
+        try
         {
+            if (_checkinWindow is not null)
+            {
+                _checkinWindow.Activate();
+                return;
+            }
+            _checkinWindow = new CheckinWindow(_client, ParseActiveWip(), RefreshAsync);
+            _checkinWindow.Closed += (_, _) => _checkinWindow = null;
             _checkinWindow.Activate();
-            return;
         }
-        _checkinWindow = new CheckinWindow(_client, ParseActiveWip(), RefreshAsync);
-        _checkinWindow.Closed += (_, _) => _checkinWindow = null;
-        _checkinWindow.Activate();
+        catch (Exception error)
+        {
+            _checkinWindow = null;
+            App.LogException("open-checkin", error);
+            StatusText = $"打开原生日常决策窗口失败：{error.Message}";
+        }
     }
 
     private async void Shutdown_Click(object sender, RoutedEventArgs e)

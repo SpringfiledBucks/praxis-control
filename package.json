@@ -15,6 +15,7 @@
     "test:linux-gui-real-service": "node clients/linux/tests/real-service-smoke.mjs",
     "test:linux-gui-accessibility": "python3 clients/linux/tests/accessibility-smoke.py",
     "test:linux-package": "sh clients/linux/tests/package-smoke.sh",
+    "test:windows-gui-e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File clients/windows/tests/e2e.ps1",
     "test:postgres": "vitest run src/infrastructure/postgres.integration.test.ts",
     "test:watch": "vitest",
     "migrate": "tsx src/cli/migrate.ts",

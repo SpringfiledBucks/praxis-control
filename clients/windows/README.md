@@ -11,6 +11,14 @@ dotnet restore clients\windows\PraxisControl.Windows\PraxisControl.Windows.cspro
 dotnet build clients\windows\PraxisControl.Windows\PraxisControl.Windows.csproj -c Release -p:Platform=x64
 ```
 
+原生表单的隔离端到端验收会使用随机本机端口和系统临时数据目录，完成真实分析、保存、工作台刷新与审计链校验；成功后自动停止服务并清理临时目录：
+
+```powershell
+npm run test:windows-gui-e2e
+```
+
+如需指定隔离 SDK，可设置 `PRAXIS_DOTNET` 为 `dotnet.exe` 的绝对路径。失败时脚本保留诊断目录；成功时可传递 `-KeepArtifacts` 供人工复核。
+
 运行前先从仓库根目录启动服务：
 
 ```powershell

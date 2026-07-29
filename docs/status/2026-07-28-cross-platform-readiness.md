@@ -7,7 +7,7 @@
 ## 已验证
 
 - Windows 11：Node.js 24、PGlite、Web、CLI、TUI、启停、备份、恢复、导出和审计链校验；
-- Windows WinUI 3 原生壳已完成在线、离线、刷新和安全关闭验收，原生日常决策表单已通过构建；
+- Windows WinUI 3 原生壳已完成在线、离线、刷新和安全关闭验收，原生日常决策表单已完成隔离分析、保存、主窗口刷新和审计链端到端验收；
 - Linux GTK4/libadwaita 原生壳已在隔离 Linux 环境连接真实 PGlite 服务，完成 API、AT-SPI、截图、刷新、安全关闭和 Meson 安装后启动验收；
 - Gitea Actions run 73 已在 NAS Linux runner 完成 `verify`、`linux-gui-smoke` 和 `postgres-contract` 三个作业；
 - Gitea Actions run 74 已在当前 CI 边界提交上再次完成三个作业；
@@ -15,7 +15,6 @@
 
 ## 当前边界
 
-- Windows 原生日常决策表单的端到端保存仍待主机无锁屏、无输入冲突时复验；
 - 尚未在长期 Linux 桌面会话中做人工鼠标/键盘验收，也未制作 Flatpak；
 - GitHub 镜像已建立并自动同步；NAS Gitea 当前只有 Linux runner，Windows 原生构建仍以 Win11 实机本地构建和验收为证据；Linux 上的 .NET 还原成功，但 WinUI 3 XAML 编译器是 Windows PE 程序，不能在 Linux 上完成完整构建；
 - macOS 不在当前设计、打包和 CI 范围内。

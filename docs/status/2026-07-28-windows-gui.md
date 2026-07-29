@@ -17,14 +17,19 @@
 - 通过原生按钮刷新成功；
 - 服务停止时再次真实启动客户端，界面正确禁用依赖服务的操作并显示可直接执行的启动命令；
 - 通过原生按钮请求安全关闭后，CLI `praxis status` 验证 `running: false`；
+- 原生日常决策窗口在隔离 PGlite 数据目录完成真实控件赋值、Bearer API 分析、确认保存和主窗口刷新；工作台显示 `READY`、待复盘 `1` 和最新行动“验证 Windows 原生表单闭环”；
+- `audit-verify` 对保存结果返回 `valid: true`、`totalEvents: 1`、无失败项；
+- `npm run test:windows-gui-e2e` 使用随机回环端口、系统临时数据目录和 Release WinUI 客户端连续两次返回 `WINDOWS_E2E: PASS`，成功后停止服务并清理测试目录；
 - 最终关闭 GUI，未遗留 Praxis Control 服务或窗口。
 
 ## 已修正问题
 
-首次启动暴露了当前运行时没有 `CardStrokeColorDefaultBrush` 资源的问题。已改为项目自有的淡雅中性色板，复测启动通过。启动期异常会写入 `%LOCALAPPDATA%\PraxisControl\logs\windows-client-startup.log`，便于无控制台的 WinExe 诊断。
+首次启动暴露了当前运行时没有 `CardStrokeColorDefaultBrush` 资源的问题。已改为项目自有的淡雅中性色板，复测启动通过。
+
+首次打开日常决策窗口时，Windows App SDK 因应用资源字典未合并 `XamlControlsResources` 而缺少 `TabViewButtonBackground`，导致 `Microsoft.UI.Xaml.dll` stowed exception。现在应用显式合并 WinUI 控件资源，二级窗口可稳定加载；入口同时捕获构造异常，应用级异常追加到当前 `PRAXIS_DATA_DIR\logs\windows-client.log`，不再只覆盖主窗口启动阶段。
+
+自动提交测试仅在 `PRAXIS_WINDOWS_E2E_AUTOSUBMIT=1` 且数据目录位于系统临时目录 `PraxisControlE2E` 下时允许执行，不能写入默认用户事实库。
 
 ## 剩余范围
-
-原生日常决策窗口已实现完整输入、Bearer API 分析、分析后输入防漂移和人工确认保存，并通过 x64 Release 零警告构建；主窗口实机可访问性树确认“记录今日决策”入口可见。由于桌面验收期间检测到用户正在输入，本轮主动停止继续注入点击，尚未把原生表单的端到端保存标记为 VERIFIED。
 
 关系图原生导航、通知/托盘、MSIX、签名和 Windows 11 小组件仍属于后续范围。

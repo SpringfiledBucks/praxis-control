@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="记录今日决策 · Praxis Control">
-  <Grid Background="{StaticResource PraxisBackgroundBrush}">
+  <Grid x:Name="RootLayout" Background="{StaticResource PraxisBackgroundBrush}">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
