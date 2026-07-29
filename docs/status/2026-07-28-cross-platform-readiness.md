@@ -11,7 +11,7 @@
 - Linux GTK4/libadwaita 原生壳已在隔离 Linux 环境连接真实 PGlite 服务，完成 API、AT-SPI、截图、刷新、安全关闭和 Meson 安装后启动验收；
 - Gitea Actions run 73 已在 NAS Linux runner 完成 `verify`、`linux-gui-smoke` 和 `postgres-contract` 三个作业；
 - Gitea Actions run 74 已在当前 CI 边界提交上再次完成三个作业；
-- CI/CD 权威入口为 Gitea Actions；GitHub 仅作私有镜像，不运行 Actions。
+- CI/CD 权威入口为 Gitea Actions；GitHub 作为公开镜像和 Release 分发入口，不运行 Actions。
 
 ## 当前边界
 

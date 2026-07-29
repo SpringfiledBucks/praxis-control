@@ -3,7 +3,7 @@ set -u
 
 umask 077
 
-readonly REPOSITORY_DIR="${PRAXIS_MIRROR_REPOSITORY_DIR:-/data/git/repositories/<GITEA_OWNER>/praxis-control.git}"
+readonly REPOSITORY_DIR="${PRAXIS_MIRROR_REPOSITORY_DIR:-$(git rev-parse --git-dir 2>/dev/null || printf '.')}"
 readonly REMOTE_URL="${PRAXIS_MIRROR_REMOTE_URL:-ssh://git@github-praxis-control/SpringfiledBucks/praxis-control.git}"
 readonly STATE_DIR="${PRAXIS_MIRROR_STATE_DIR:-/data/git/.local/state/praxis-control-github-mirror}"
 readonly MAX_ATTEMPTS="${PRAXIS_MIRROR_MAX_ATTEMPTS:-3}"

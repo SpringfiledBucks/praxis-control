@@ -15,7 +15,7 @@
 
 ## 当前环境事实
 
-- 现有 `timescaledb` 以独立 Docker 容器运行，`5432/tcp` 发布到所有 IPv4/IPv6 主机地址；从 Windows 实测 `<NAS_LAN_IP>:5432` 与 `<NAS_TAILSCALE_IP>:5432` 均可连接；
+- 现有 `timescaledb` 以独立 Docker 容器运行，`5432/tcp` 发布到所有 IPv4/IPv6 主机地址；从 Windows 经 LAN 与 Tailscale 路径均可连接，具体地址不进入公开记录；
 - 本次检查时 5432 已建立连接数为 0；排除数据库数据目录、缓存和依赖目录后，NAS 用户目录未发现静态 `5432`/`timescaledb` 配置引用。以上只是观察快照，不能证明该数据库无消费者；
 - Nginx 仅监听 80，没有 443、证书目录或有效 TLS server；
 - Headscale tailnet 的 MagicDNS 未启用，`tailscale serve status --json` 为空，不能假设具备官方 Tailscale Serve 的证书或身份头能力；

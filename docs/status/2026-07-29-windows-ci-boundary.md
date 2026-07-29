@@ -10,7 +10,7 @@
 
 ## 环境与路径
 
-- 开发机通过 Tailscale 直连 `<NAS_HOSTNAME>`（`<NAS_TAILSCALE_IP>`）；`tailscale ping` 为直连，Gitea Web API 与 Git SSH 均可访问；
+- 开发机通过 Tailscale 直连 NAS；`tailscale ping` 为直连，Gitea Web API 与 Git SSH 均可访问；主机名和地址不进入公开记录；
 - NAS：Ubuntu 24.04、x86_64、KVM 可用、32 个逻辑处理器、约 62 GiB 内存；
 - 测试运行时：现有 `praxis-control-ci:node24-gtk4-v1` 隔离容器，临时安装 Alpine `dotnet8-sdk 8.0.129`；
 - 目标项目：`clients/windows/PraxisControl.Windows/PraxisControl.Windows.csproj`，`net8.0-windows10.0.19041.0`、WinUI 3、Windows App SDK 1.8。

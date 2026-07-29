@@ -18,6 +18,7 @@
     "test:windows-gui-e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File clients/windows/tests/e2e.ps1",
     "test:windows-package": "powershell -NoProfile -ExecutionPolicy Bypass -File clients/windows/tests/package-smoke.ps1",
     "package:windows-portable": "powershell -NoProfile -ExecutionPolicy Bypass -File clients/windows/package-portable.ps1",
+    "package:linux": "sh clients/linux/package-release.sh",
     "test:postgres": "vitest run src/infrastructure/postgres.integration.test.ts",
     "test:watch": "vitest",
     "migrate": "tsx src/cli/migrate.ts",

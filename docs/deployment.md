@@ -39,7 +39,7 @@ NAS 已于 2026-07-28 完成主机、Gitea Web/API 与 Git SSH 的只读恢复�
 
 ## Git 远端
 
-本地仓库的权威远端是 NAS Gitea `<GITEA_OWNER>/praxis-control`，GitHub 私有仓库 `SpringfiledBucks/praxis-control` 由 Gitea 侧通过专用 SSH Deploy Key 和 `post-receive` hook 单向同步。本地只保留 Gitea `origin`，不直接双写。
+本地仓库的权威远端是非公开 Gitea 仓库；GitHub 公开仓库 `SpringfiledBucks/praxis-control` 作为代码镜像、外部预览和 Release 分发入口，由 Gitea 侧通过专用 SSH Deploy Key 和 `post-receive` hook 单向同步。本地只保留 Gitea `origin`，不直接双写；GitHub 不运行 Actions。内部 Gitea 地址、仓库路径和网络拓扑不得写入公开文档或工作流常量。
 
 ## 提升迁移
 

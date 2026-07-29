@@ -6,9 +6,9 @@
 
 ## 拓扑
 
-- 权威仓库：NAS Gitea 私有仓库 `<GITEA_OWNER>/praxis-control`；
-- 异地镜像：GitHub 私有仓库 `SpringfiledBucks/praxis-control`；
-- 开发机仅保留 Gitea `origin`：`ssh://git@<NAS_LAN_IP>:2222/<GITEA_OWNER>/praxis-control.git`；
+- 权威仓库：NAS Gitea 私有仓库（内部地址和路径已从公开记录移除）；
+- 异地镜像：GitHub 公开仓库 `SpringfiledBucks/praxis-control`；
+- 开发机仅保留指向 Gitea 的 `origin`，具体连接信息不进入公开仓库；
 - GitHub 不作为双主写入端，不要求开发机双写。
 
 ## 镜像实现
@@ -23,7 +23,7 @@
 
 ## 验收证据
 
-- GitHub 仓库已在 UI 确认为 `Private`；
+- GitHub 仓库最初按私有镜像验收，2026-07-30 已按项目要求改为公开；
 - Deploy Key 已在 UI 确认为 `Read/write`，指纹为 `SHA256:P0A9ALMhIZISVWYRJ7khClpXxAaA73naEEQA/hXrpuM`；
 - Gitea 容器通过该密钥成功认证 GitHub，并可读取空仓库；
 - 首次手动镜像后，本地 `HEAD`、Gitea `main` 与 GitHub `main` 均为 `69af26c4c19333ff78b83862ce4cc6ee12446736`；
@@ -41,7 +41,7 @@
 
 ## CI/CD 边界
 
-- GitHub 仅作为私有镜像，不承担 Actions 或发布任务；
+- GitHub 作为公开镜像和 Release 分发入口，不承担 Actions；
 - 早期四次镜像提交曾让 GitHub 识别 `quality` 工作流，runs `#1`–`#4` 均因账户状态在启动阶段失败，未执行任何代码；
 - 明确镜像边界后已删除 `.github/workflows/ci.yml`，后续镜像提交不再触发 GitHub Actions；
 - Gitea Actions 是项目唯一权威 CI/CD 入口，NAS runner 持续执行 `verify`、`linux-gui-smoke` 和 `postgres-contract`。
