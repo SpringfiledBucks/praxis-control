@@ -30,7 +30,7 @@
 - 服务默认仅监听 `127.0.0.1`；
 - POST 页面具有 CSRF 校验，CLI 使用受保护的运行时令牌；
 - 浏览器完成实际纵向闭环和视觉检查；
-- CI 覆盖 Windows 与 Linux。
+- Gitea Actions 自动覆盖共享核心、Linux GUI 和 PostgreSQL 合同；Windows 原生客户端在 Win11 上执行可复现构建与交互验收，持续 Windows Runner 属于后续工程化范围。
 
 ## 暂不验收
 

@@ -50,11 +50,11 @@
 
 ## 当前外部状态
 
-- NAS Gitea 私有仓库 `<GITEA_OWNER>/praxis-control` 已建立，本地唯一 `origin` 指向 Gitea，`main` 已推送；
-- Gitea Actions run 73 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，见 `docs/status/2026-07-29-gitea-ci.md`；
+- NAS Gitea 私有仓库 `<GITEA_OWNER>/praxis-control` 已建立，本地唯一 `origin` 通过 Tailscale 指向 `ssh://git@<NAS_TAILSCALE_IP>:2222/<GITEA_OWNER>/praxis-control.git`，`main` 已推送；
+- Gitea Actions run 73 与 run 74 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，见 `docs/status/2026-07-29-gitea-ci.md`；
 - GitHub 私有仓库 `SpringfiledBucks/praxis-control` 已建立；Gitea 使用单仓库 SSH Deploy Key 和 `post-receive` hook 单向镜像到 GitHub，自动同步已验证，见 `docs/status/2026-07-28-git-remote-readiness.md`；
 - GitHub 仅作为私有镜像，不运行 Actions；CI/CD 权威入口为 Gitea Actions，仓库不再保留 GitHub Actions 工作流；
 - NAS 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
 - Windows 轻量版已验证；Linux GTK 已在 NAS 一次性环境通过真实 PGlite 服务、原生按钮动作、AT-SPI、中文截图和 Meson 安装后启动验收，当前 MVP 范围为 VERIFIED，见 `docs/status/2026-07-28-linux-gui.md`；
-- Windows WinUI 3 原生壳已在 Win11 实机通过在线、离线、刷新和安全关闭验收；原生日常决策窗口已实现并通过构建，端到端表单保存仍待无输入冲突时复验；
+- Windows WinUI 3 原生壳已在 Win11 实机通过在线、离线、刷新和安全关闭验收；原生日常决策窗口已实现并通过构建，端到端表单保存仍待无输入冲突时复验；NAS Linux 交叉还原成功，但 WinUI XAML 编译器不能在 Linux 执行，因此完整 Windows 构建必须保留在 Windows 环境，见 `docs/status/2026-07-29-windows-ci-boundary.md`；
 - 全量版隔离容器已通过最低权限角色、secret、回环发布、真实写入、审计、备份、独立恢复及 Docker CLI 生命周期验收，见 `docs/status/2026-07-29-full-profile-container.md`；应用原生密码会话和 Nginx HTTPS 模板也已在 NAS 隔离验证，见 `docs/status/2026-07-29-production-access.md`。生产接入仍为 PARTIAL：真实域名/证书未定，现有 PostgreSQL 仍对 LAN/Tailscale 暴露 5432，未确认消费者前不得重建。

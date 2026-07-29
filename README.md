@@ -11,8 +11,8 @@
 - Windows/Linux 共用 Web、CLI 与 TUI；
 - Windows/Linux GUI 后续按平台特点分别实现；
 - Windows WinUI 3 最小原生壳已通过构建、启动、刷新与安全关闭验收；
-- Linux GTK4/libadwaita 原生壳和无头 CI 已建立，等待 Linux runner 实际验收；
-- 全量版保留 PostgreSQL 适配器，NAS 恢复后再验收；
+- Linux GTK4/libadwaita 原生壳已在 Gitea Linux runner 完成真实服务、可访问性、截图和安装后启动验收；
+- 全量版 PostgreSQL 适配器和隔离容器栈已验收，真实域名、证书与数据库暴露治理仍保持待确认；
 - Markdown 是内容和导出格式，不是实时事实库。
 
 ## 快速开始
@@ -59,3 +59,5 @@ npm run build
 当前权威交接见 `HANDOFF.md`，架构决策见 `docs/adr/`，前端视觉与交互约束见 `docs/design-system.md`。
 
 跨客户端 API 合同可在服务运行时通过 `GET /api/openapi.json` 读取；原生 GUI 技术路线见 `docs/adr/ADR-0006-native-gui-platforms.md`。
+
+本地开发机访问 NAS Gitea 时优先使用 Tailscale 地址 `ssh://git@<NAS_TAILSCALE_IP>:2222/<GITEA_OWNER>/praxis-control.git`；NAS 内部服务间调用仍可使用其受控内网地址。
