@@ -29,7 +29,7 @@ internal sealed record RuntimeState(
         }
         catch (FileNotFoundException)
         {
-            throw new InvalidOperationException("服务尚未启动。请在项目目录运行：npm run praxis -- start --no-open");
+            throw new InvalidOperationException("服务尚未启动。请先使用 Praxis Control 启动入口，或通过 CLI 执行 start --no-open。");
         }
         catch (JsonException error)
         {

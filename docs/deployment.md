@@ -12,6 +12,8 @@ Windows/Linux Web、CLI、TUI
 
 关闭浏览器不会关闭服务。使用页面“安全关闭”、`praxis stop` 或平台快捷入口，服务会停止接收请求、关闭数据库并清理状态文件。
 
+Windows x64 可通过 `npm run package:windows-portable` 生成免安装、自包含便携目录和 ZIP。便携目录中的入口分别承担原生 GUI、Web、TUI、CLI 和安全关闭；程序替换不触碰 `%LOCALAPPDATA%\PraxisControl`。升级前应先安全关闭并备份，卸载只删除程序目录，默认保留事实数据。当前便携版不提供签名、MSIX 或自动更新。
+
 PGlite 备份只能恢复到不存在且与当前数据目录相互独立的目录：
 
 ```text

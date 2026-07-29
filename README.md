@@ -22,6 +22,8 @@ scripts\bootstrap.ps1
 npm run praxis -- start
 ```
 
+Windows x64 免安装交付可执行 `npm run package:windows-portable`；生成目录中的 `PraxisControl.cmd` 可双击启动服务和原生客户端，`PraxisControl-Stop.cmd` 负责安全关闭。程序目录与 `%LOCALAPPDATA%\PraxisControl` 事实数据相互独立。
+
 常用命令：
 
 ```text
@@ -52,6 +54,8 @@ npm test
 npm run test:linux-client
 npm run typecheck
 npm run build
+npm run test:windows-gui-e2e
+npm run test:windows-package
 ```
 
 真实 PostgreSQL 合同测试需要一次性测试库，并显式设置 `POSTGRES_TEST_URL` 后执行 `npm run test:postgres`；默认本机测试不会连接 NAS 数据库。

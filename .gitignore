@@ -5,6 +5,7 @@ dist/
 .env.production
 backups/
 coverage/
+artifacts/
 *.log
 .DS_Store
 Thumbs.db
