@@ -39,8 +39,9 @@
 - 随后改用 SSH Deploy Key，当前运行路径和进程参数均不含访问令牌；
 - 泄露令牌已失效且从 Gitea 配置移除，不得恢复或复用。
 
-## 外部限制
+## CI/CD 边界
 
-- GitHub Actions 已识别 `quality` 工作流，但账户计费当前被锁定；runs `30410651519` 和 `30410926030` 均为启动阶段失败，页面明确要求更新付款信息；
-- 这不是代码、依赖或工作流执行失败。在账户侧恢复前，Windows GitHub runner 验收保持 BLOCKED；
-- Gitea Actions 仍是当前可执行的权威 CI，且不受该 GitHub 账户状态影响。
+- GitHub 仅作为私有镜像，不承担 Actions 或发布任务；
+- 早期镜像提交曾让 GitHub 识别 `quality` 工作流，runs `30410651519` 和 `30410926030` 因账户状态在启动阶段失败，未执行任何代码；
+- 明确镜像边界后已删除 `.github/workflows/ci.yml`，后续镜像提交不再触发 GitHub Actions；
+- Gitea Actions 是项目唯一权威 CI/CD 入口，NAS runner 持续执行 `verify`、`linux-gui-smoke` 和 `postgres-contract`。

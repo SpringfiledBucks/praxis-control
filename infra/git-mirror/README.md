@@ -5,6 +5,7 @@
 - Gitea `<GITEA_OWNER>/praxis-control` 是权威远端；
 - GitHub `SpringfiledBucks/praxis-control` 是私有、只接受镜像写入的异地副本；
 - 本机仍只配置 Gitea `origin`，不直接双写；
+- GitHub 不运行 Actions；CI/CD 统一由 Gitea Actions 执行；
 - GitHub 使用只绑定该仓库、允许写入的 Deploy Key，不使用个人密码或通用访问令牌；
 - 仅镜像分支和标签，不推送 Gitea 内部引用。
 

@@ -25,6 +25,8 @@ jobs:
       - run: npm run build
       - name: Validate full-profile shell entrypoints
         run: sh -n infra/full/init-database.sh infra/full/manage.sh infra/full/backup.sh infra/full/render-nginx.sh infra/full/tests/credential-guard.sh infra/full/tests/nginx-config.sh infra/full/tests/smoke.sh
+      - name: Validate Git mirror shell entrypoints
+        run: bash -n infra/git-mirror/github-mirror-sync.sh && sh -n infra/git-mirror/post-receive
 
   linux-gui-smoke:
     runs-on: ubuntu-latest
