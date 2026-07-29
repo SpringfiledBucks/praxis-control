@@ -35,7 +35,7 @@
 
 - 初始尝试按 Gitea 官方 HTTPS push mirror 方式使用单仓库 GitHub fine-grained PAT；
 - Gitea 1.26 会把带凭据的 HTTPS remote URL 传给 `git-remote-https` 进程参数，诊断输出因此暴露了该令牌；
-- 发现后立即停止同步进程、在 GitHub 撤销令牌、删除 Gitea push mirror，并复核 `push_mirror` 记录数为 0、相关 Git 进程不存在；
+- 发现后立即停止同步进程、在 GitHub 撤销令牌、删除 Gitea push mirror 及裸仓库中残留的 HTTPS remote，并复核 `push_mirror` 记录数和裸仓库 remote 数均为 0、相关 Git 进程不存在；
 - 随后改用 SSH Deploy Key，当前运行路径和进程参数均不含访问令牌；
 - 泄露令牌已失效且从 Gitea 配置移除，不得恢复或复用。
 
