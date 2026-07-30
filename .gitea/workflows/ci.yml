@@ -4,11 +4,15 @@ on:
   push:
   pull_request:
 
+env:
+  GITEA_INTERNAL_URL: http://host.docker.internal:3000
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     container:
       image: praxis-control-ci:node24-gtk4-v1
+      options: --add-host=host.docker.internal:host-gateway
     steps:
       - name: Checkout authoritative commit
         env:
@@ -16,7 +20,7 @@ jobs:
           TARGET_SHA: ${{ github.sha }}
         run: |
           git init .
-          git remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
+          git remote add origin "$GITEA_INTERNAL_URL/${{ github.repository }}.git"
           git -c http.extraheader="Authorization: token $GITEA_TOKEN" fetch --no-tags --depth=1 origin "$TARGET_SHA"
           git checkout --detach FETCH_HEAD
       - run: npm ci
@@ -32,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: praxis-control-ci:node24-gtk4-v1
+      options: --add-host=host.docker.internal:host-gateway
     steps:
       - name: Checkout authoritative commit
         env:
@@ -39,7 +44,7 @@ jobs:
           TARGET_SHA: ${{ github.sha }}
         run: |
           git init .
-          git remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
+          git remote add origin "$GITEA_INTERNAL_URL/${{ github.repository }}.git"
           git -c http.extraheader="Authorization: token $GITEA_TOKEN" fetch --no-tags --depth=1 origin "$TARGET_SHA"
           git checkout --detach FETCH_HEAD
       - run: npm ci
@@ -72,6 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: praxis-control-ci:node24-gtk4-v1
+      options: --add-host=host.docker.internal:host-gateway
     services:
       postgres:
         image: timescale/timescaledb:latest-pg16
@@ -93,7 +99,7 @@ jobs:
           TARGET_SHA: ${{ github.sha }}
         run: |
           git init .
-          git remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
+          git remote add origin "$GITEA_INTERNAL_URL/${{ github.repository }}.git"
           git -c http.extraheader="Authorization: token $GITEA_TOKEN" fetch --no-tags --depth=1 origin "$TARGET_SHA"
           git checkout --detach FETCH_HEAD
       - run: npm ci
