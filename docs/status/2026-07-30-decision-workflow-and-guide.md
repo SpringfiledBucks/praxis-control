@@ -1,6 +1,6 @@
 # 第二批业务能力：项目决策执行闭环与教程
 
-状态：PARTIAL
+状态：VERIFIED
 
 日期：2026-07-30
 
@@ -33,6 +33,10 @@
 - 隔离浏览器：创建项目、关联决策、READY 分析、计划→执行→待复盘→闭环、结果展示和 3 节点/2 关系图谱均通过；
 - 375px 页面宽度下教程无页面级横向溢出，浏览器控制台无错误。
 
-## 待完成
+## Gitea 验证
 
-- Gitea `verify`、`linux-gui-smoke`、`postgres-contract` 三作业通过后提升为 VERIFIED。
+- run 87 对应提交 `a7628c7`；
+- `verify`：通过共享测试、类型检查、生产构建和基础设施静态检查；
+- `linux-gui-smoke`：通过 Linux 客户端、真实 PGlite 服务、可访问性和发布包检查；
+- `postgres-contract`：通过 004 迁移、带 `project_id` 的便携导入、事务审计和并发 WIP 合同；
+- 三个作业均为成功，当前批次提升为 VERIFIED。

@@ -54,7 +54,7 @@
 ## 当前外部状态
 
 - NAS Gitea 私有仓库已建立，本地唯一 `origin` 通过受控网络连接该权威远端，`main` 已推送；内部地址、仓库路径和账号不进入公开文档；
-- Gitea Actions 基础设施与最新业务逻辑 run 85 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，见 `docs/status/2026-07-29-gitea-ci.md` 与 `docs/status/2026-07-30-business-logic-foundation.md`；
+- Gitea Actions 基础设施与最新业务能力 run 87 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，见 `docs/status/2026-07-29-gitea-ci.md`、`docs/status/2026-07-30-business-logic-foundation.md` 与 `docs/status/2026-07-30-decision-workflow-and-guide.md`；
 - GitHub 公开仓库 `SpringfiledBucks/praxis-control` 用于代码镜像、外部预览和 Release 分发；Gitea 使用单仓库 SSH Deploy Key 和 `post-receive` hook 单向镜像到 GitHub，自动同步已验证，见 `docs/status/2026-07-28-git-remote-readiness.md`；
 - GitHub 不运行 Actions；CI/CD 权威入口为 Gitea Actions，仓库不保留 GitHub Actions 工作流；
 - NAS 验收证据见 `docs/status/2026-07-28-nas-readiness.md`。
