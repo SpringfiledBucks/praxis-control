@@ -1,6 +1,7 @@
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { constants as fsConstants } from 'node:fs';
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, open, readFile, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:net';
 import path from 'node:path';
 import process from 'node:process';
 import readline from 'node:readline/promises';
@@ -9,7 +10,7 @@ import { restorePGliteBackup } from '../infrastructure/backup.js';
 import { createDatabase } from '../infrastructure/db.js';
 import { runMigrations } from '../infrastructure/migrations.js';
 import { importPortableSnapshot } from '../application/import.js';
-import { getLiveRuntimeState, type RuntimeState } from '../runtime/control.js';
+import { getReachableRuntimeState, readRuntimeLock, type RuntimeState } from '../runtime/control.js';
 
 const config = loadConfig();
 const command = process.argv[2] ?? 'help';
@@ -25,7 +26,7 @@ function option(name: string): string | undefined {
 }
 
 async function runtime(required = true): Promise<RuntimeState | null> {
-  const state = await getLiveRuntimeState(config.runtimeDir);
+  const state = await getReachableRuntimeState(config.runtimeDir);
   if (!state && required) throw new Error('Praxis Control 尚未运行，请先执行 praxis start。');
   return state;
 }
@@ -51,36 +52,60 @@ function openBrowser(url: string): void {
   child.unref();
 }
 
-async function waitForStart(): Promise<RuntimeState> {
-  const deadline = Date.now() + 20_000;
+async function waitForStart(child: ChildProcess, logPath: string, spawnError: () => Error | undefined): Promise<RuntimeState> {
+  const deadline = Date.now() + 60_000;
   while (Date.now() < deadline) {
-    const state = await getLiveRuntimeState(config.runtimeDir);
-    if (state) {
-      try {
-        await api(state, '/health');
-        return state;
-      } catch {
-        // The process may have written its state before the HTTP listener is ready.
-      }
+    const failure = spawnError();
+    if (failure) throw new Error(`服务进程创建失败：${failure.message}。日志：${logPath}`);
+    if (child.exitCode !== null) {
+      throw new Error(`服务启动失败（退出码 ${child.exitCode}）。请查看日志：${logPath}`);
     }
+    const state = await getReachableRuntimeState(config.runtimeDir);
+    if (state) return state;
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
-  throw new Error('服务未能在 20 秒内启动，请执行 praxis doctor 查看环境。');
+  throw new Error(`服务未能在 60 秒内启动。请执行 praxis doctor 并查看日志：${logPath}`);
 }
 
 async function start(): Promise<RuntimeState> {
   const existing = await runtime(false);
   if (existing) return existing;
   const serverEntry = path.resolve('dist', 'server.js');
-  const child = spawn(process.execPath, [serverEntry], {
-    cwd: process.cwd(),
-    detached: true,
-    stdio: 'ignore',
-    windowsHide: true,
-    env: process.env,
-  });
+  await mkdir(config.logDir, { recursive: true });
+  const logPath = path.join(config.logDir, 'service.log');
+  const log = await open(logPath, 'a', 0o600);
+  let child: ChildProcess;
+  let childSpawnError: Error | undefined;
+  try {
+    child = spawn(process.execPath, [serverEntry], {
+      cwd: process.cwd(),
+      detached: true,
+      stdio: ['ignore', log.fd, log.fd],
+      windowsHide: true,
+      env: process.env,
+    });
+    child.once('error', (error) => { childSpawnError = error; });
+  } finally {
+    await log.close();
+  }
   child.unref();
-  return waitForStart();
+  return waitForStart(child, logPath, () => childSpawnError);
+}
+
+async function fixedPortAvailable(): Promise<boolean | null> {
+  if (config.port === 0) return null;
+  const probe = createServer();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      probe.once('error', reject);
+      probe.listen(config.port, config.host, resolve);
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    if (probe.listening) await new Promise<void>((resolve) => probe.close(() => resolve()));
+  }
 }
 
 async function stop(): Promise<void> {
@@ -88,7 +113,7 @@ async function stop(): Promise<void> {
   if (!state) return;
   const response = await fetch(`${state.url}/api/system/shutdown`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { authorization: `Bearer ${state.apiToken}`, 'content-type': 'application/json' },
     body: JSON.stringify({ token: state.shutdownToken }),
   });
   if (!response.ok) throw new Error(`关闭请求失败：HTTP ${response.status}`);
@@ -229,6 +254,7 @@ async function main(): Promise<void> {
   }
   if (command === 'doctor') {
     const state = await runtime(false);
+    const lock = await readRuntimeLock(config.runtimeDir);
     const nodeMajor = Number(process.versions.node.split('.')[0]);
     let dataParentWritable = true;
     try {
@@ -254,13 +280,17 @@ async function main(): Promise<void> {
       node: process.version,
       platform: process.platform,
       databaseMode: config.databaseMode,
+      configuredPort: config.port === 0 ? 'auto' : config.port,
       dataDir: config.dataDir,
       pgliteDataDir: config.pgliteDataDir,
       runtimeDir: config.runtimeDir,
+      serviceLog: path.join(config.logDir, 'service.log'),
       checks: {
         nodeSupported: nodeMajor >= 24,
         dataParentWritable,
         postgresConfigurationPresent: config.databaseMode !== 'postgres' || Boolean(config.databaseUrl),
+        fixedPortAvailable: state ? null : await fixedPortAvailable(),
+        startupLock: lock ? { present: true, pid: lock.pid } : { present: false },
       },
       service,
     }, null, 2));

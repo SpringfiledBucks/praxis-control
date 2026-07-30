@@ -1,5 +1,6 @@
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { z } from 'zod';
 
 const runtimeStateSchema = z.object({
@@ -12,10 +13,26 @@ const runtimeStateSchema = z.object({
   apiToken: z.string().min(32),
 });
 
+const runtimeLockSchema = z.object({
+  pid: z.number().int().positive(),
+  startedAt: z.iso.datetime(),
+});
+
 export type RuntimeState = z.infer<typeof runtimeStateSchema>;
+export type RuntimeLockState = z.infer<typeof runtimeLockSchema>;
+
+export type RuntimeLock = {
+  path: string;
+  pid: number;
+  release: () => Promise<void>;
+};
 
 export function runtimeStatePath(runtimeDirectory: string): string {
   return path.join(runtimeDirectory, 'service.json');
+}
+
+export function runtimeLockPath(runtimeDirectory: string): string {
+  return path.join(runtimeDirectory, 'service.lock');
 }
 
 export async function writeRuntimeState(runtimeDirectory: string, state: RuntimeState): Promise<void> {
@@ -37,6 +54,15 @@ export async function readRuntimeState(runtimeDirectory: string): Promise<Runtim
   }
 }
 
+export async function readRuntimeLock(runtimeDirectory: string): Promise<RuntimeLockState | null> {
+  try {
+    const parsed = runtimeLockSchema.safeParse(JSON.parse(await readFile(runtimeLockPath(runtimeDirectory), 'utf8')));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function removeRuntimeState(runtimeDirectory: string, expectedPid?: number): Promise<void> {
   if (expectedPid !== undefined) {
     const current = await readRuntimeState(runtimeDirectory);
@@ -54,10 +80,74 @@ export function isProcessAlive(pid: number): boolean {
   }
 }
 
+export async function acquireRuntimeLock(runtimeDirectory: string, pid = process.pid): Promise<RuntimeLock> {
+  await mkdir(runtimeDirectory, { recursive: true });
+  const target = runtimeLockPath(runtimeDirectory);
+  const payload = `${JSON.stringify({ pid, startedAt: new Date().toISOString() }, null, 2)}\n`;
+
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    try {
+      await writeFile(target, payload, { encoding: 'utf8', mode: 0o600, flag: 'wx' });
+      let released = false;
+      return {
+        path: target,
+        pid,
+        release: async () => {
+          if (released) return;
+          released = true;
+          const current = await readRuntimeLock(runtimeDirectory);
+          if (current?.pid === pid) await rm(target, { force: true });
+        },
+      };
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'EEXIST') throw error;
+
+      const existing = await readRuntimeLock(runtimeDirectory);
+      if (existing) {
+        if (isProcessAlive(existing.pid)) {
+          throw new Error(`数据目录正由 Praxis Control 进程 ${existing.pid} 使用；拒绝并发启动。`);
+        }
+        await rm(target, { force: true });
+        continue;
+      }
+
+      // A competing process may have created the file but not completed its write yet.
+      const age = await stat(target).then((value) => Date.now() - value.mtimeMs).catch(() => 0);
+      if (age < 2_000) {
+        await delay(100);
+        continue;
+      }
+      await rm(target, { force: true });
+    }
+  }
+
+  throw new Error(`无法取得启动锁：${target}`);
+}
+
 export async function getLiveRuntimeState(runtimeDirectory: string): Promise<RuntimeState | null> {
   const state = await readRuntimeState(runtimeDirectory);
   if (!state) return null;
   if (isProcessAlive(state.pid)) return state;
   await removeRuntimeState(runtimeDirectory, state.pid);
   return null;
+}
+
+export async function getReachableRuntimeState(runtimeDirectory: string): Promise<RuntimeState | null> {
+  const state = await getLiveRuntimeState(runtimeDirectory);
+  if (!state) return null;
+  try {
+    const response = await fetch(`${state.url}/api/system/runtime`, {
+      headers: { authorization: `Bearer ${state.apiToken}` },
+      signal: AbortSignal.timeout(1_500),
+    });
+    const body = await response.json() as Record<string, unknown>;
+    if (!response.ok || body.status !== 'ok' || typeof body.apiVersion !== 'number' || typeof body.rulesetVersion !== 'string') {
+      throw new Error('unexpected runtime identity');
+    }
+    return state;
+  } catch {
+    await removeRuntimeState(runtimeDirectory, state.pid);
+    return null;
+  }
 }

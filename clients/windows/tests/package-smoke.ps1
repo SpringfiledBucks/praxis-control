@@ -16,13 +16,6 @@ $succeeded = $false
 $previousDataDirectory = $env:PRAXIS_DATA_DIR
 $previousPort = $env:APP_PORT
 
-function Get-FreeTcpPort {
-    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
-    $listener.Start()
-    try { return ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port }
-    finally { $listener.Stop() }
-}
-
 function Remove-VerifiedTestDirectory {
     param([string]$Target, [string]$Root)
 
@@ -51,12 +44,13 @@ try {
         if (-not (Test-Path -LiteralPath $required)) { throw "Required package entry is missing: $required" }
     }
 
-    $port = Get-FreeTcpPort
     $env:PRAXIS_DATA_DIR = $dataDirectory
-    $env:APP_PORT = [string]$port
+    $env:APP_PORT = $null
     & $praxis start --no-open
     if ($LASTEXITCODE -ne 0) { throw 'Packaged service failed to start.' }
     $serviceStarted = $true
+    $runtime = Get-Content -Raw -Encoding utf8 (Join-Path $dataDirectory 'runtime\service.json') | ConvertFrom-Json
+    $port = [int]$runtime.port
 
     $processInfo = [System.Diagnostics.ProcessStartInfo]::new($client)
     $processInfo.UseShellExecute = $false

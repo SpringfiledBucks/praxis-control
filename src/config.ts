@@ -6,7 +6,10 @@ import { resolveAppDirectories } from './platform/paths.js';
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_HOST: z.string().default('127.0.0.1'),
-  APP_PORT: z.coerce.number().int().min(1).max(65535).default(4310),
+  APP_PORT: z.preprocess(
+    (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
+    z.coerce.number().int().min(0).max(65535).default(0),
+  ),
   DATABASE_MODE: z.enum(['pglite', 'postgres']).default('pglite'),
   DATABASE_URL: z.string().min(1).optional(),
   DATABASE_HOST: z.string().min(1).default('127.0.0.1'),
@@ -34,6 +37,7 @@ export type AppConfig = {
   pgliteDataDir: string;
   dataDir: string;
   backupDir: string;
+  logDir: string;
   runtimeDir: string;
   databaseSsl: boolean;
   accessMode: 'local' | 'tailscale' | 'password';
@@ -80,6 +84,9 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   if (env.ACCESS_MODE === 'password' && (!env.ACCESS_PASSWORD_FILE || !env.SESSION_SECRET_FILE)) {
     throw new Error('ACCESS_MODE=password 时必须设置 ACCESS_PASSWORD_FILE 和 SESSION_SECRET_FILE');
   }
+  if (env.APP_PORT === 0 && (env.DATABASE_MODE !== 'pglite' || env.ACCESS_MODE !== 'local')) {
+    throw new Error('自动端口只允许用于本机 PGlite 轻量模式；全量版或远程访问必须显式设置 APP_PORT');
+  }
   let accessPassword: string | undefined;
   let sessionSecret: string | undefined;
   if (env.ACCESS_MODE === 'password') {
@@ -101,6 +108,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     pgliteDataDir: env.PGLITE_DATA_DIR ? env.PGLITE_DATA_DIR : directories.databaseDir,
     dataDir: directories.dataDir,
     backupDir: directories.backupDir,
+    logDir: directories.logDir,
     runtimeDir: directories.runtimeDir,
     databaseSsl: env.DATABASE_SSL === 'true',
     accessMode: env.ACCESS_MODE,

@@ -36,6 +36,11 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.use((req, res, next) => {
     res.locals.authenticated = config.accessMode === 'local';
     if (req.path === '/health' || req.path.startsWith('/static/')) return next();
+    if (system && req.path.startsWith('/api/') && req.get('authorization') === `Bearer ${system.apiToken}`) {
+      res.locals.authenticated = true;
+      res.set('Cache-Control', 'no-store');
+      return next();
+    }
     if (config.accessMode === 'local') return next();
     res.set('Cache-Control', 'no-store');
     if (config.accessMode === 'tailscale') {

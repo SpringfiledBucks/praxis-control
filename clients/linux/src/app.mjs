@@ -43,6 +43,7 @@ class ApiClient {
   #request(method, route, body = null) {
     return new Promise((resolve, reject) => {
       const message = Soup.Message.new(method, `${this.runtime.url}${route}`);
+      message.get_request_headers().append('Authorization', `Bearer ${this.runtime.apiToken}`);
       if (body !== null) {
         message.set_request_body_from_bytes(
           'application/json',

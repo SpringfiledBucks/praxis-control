@@ -82,6 +82,13 @@ export function createRouter(database: Database, rulesetVersion: string, system?
     });
   });
 
+  router.get('/api/system/runtime', (req, res) => {
+    if (!system || req.get('authorization') !== `Bearer ${system.apiToken}`) {
+      return res.status(403).json({ status: 'error', message: '运行时令牌无效。' });
+    }
+    return res.json({ status: 'ok', apiVersion: API_VERSION, rulesetVersion });
+  });
+
   router.get('/api/openapi.json', (_req, res) => {
     res.json(openApiDocument);
   });

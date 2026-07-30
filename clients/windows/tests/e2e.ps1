@@ -33,17 +33,6 @@ function Resolve-DotnetExecutable {
     return (Get-Command dotnet -ErrorAction Stop).Source
 }
 
-function Get-FreeTcpPort {
-    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
-    $listener.Start()
-    try {
-        return ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port
-    }
-    finally {
-        $listener.Stop()
-    }
-}
-
 function Remove-VerifiedTestDirectory {
     param([string]$Target, [string]$Root)
 
@@ -64,9 +53,8 @@ try {
 
     $dotnet = Resolve-DotnetExecutable $DotnetPath
     New-Item -ItemType Directory -Path $dataDirectory -Force | Out-Null
-    $port = Get-FreeTcpPort
     $env:PRAXIS_DATA_DIR = $dataDirectory
-    $env:APP_PORT = [string]$port
+    $env:APP_PORT = $null
 
     & $dotnet build $clientProject -c Release -p:Platform=x64
     if ($LASTEXITCODE -ne 0) { throw 'Windows client build failed.' }
@@ -74,6 +62,9 @@ try {
     & $tsx (Join-Path $projectRoot 'src\cli\praxis.ts') start --no-open
     if ($LASTEXITCODE -ne 0) { throw 'Failed to start the isolated Praxis Control service.' }
     $serviceStarted = $true
+    $runtimePath = Join-Path $dataDirectory 'runtime\service.json'
+    $runtime = Get-Content -Raw -Encoding utf8 $runtimePath | ConvertFrom-Json
+    $port = [int]$runtime.port
 
     $processInfo = [System.Diagnostics.ProcessStartInfo]::new($clientExe)
     $processInfo.UseShellExecute = $false
@@ -100,10 +91,8 @@ try {
         throw "Windows check-in did not complete within 30 seconds. Current title: $windowTitle"
     }
 
-    $runtimePath = Join-Path $dataDirectory 'runtime\service.json'
-    $runtime = Get-Content -Raw -Encoding utf8 $runtimePath | ConvertFrom-Json
     $headers = @{ Authorization = "Bearer $($runtime.apiToken)" }
-    $dashboard = Invoke-RestMethod -Uri "http://127.0.0.1:$port/api/dashboard" -Headers $headers -Method Get
+    $dashboard = Invoke-RestMethod -Uri "$($runtime.url)/api/dashboard" -Headers $headers -Method Get
     if ([string]::IsNullOrWhiteSpace([string]$dashboard.latestCheckin.id)) {
         throw 'Dashboard did not return the check-in saved by the Windows client.'
     }

@@ -16,7 +16,7 @@ export const openApiDocument = {
     version: `${API_VERSION}.0.0`,
     description: 'Web、CLI、TUI 与原生 GUI 共用的本地优先服务合同。客户端不得直接访问数据库。',
   },
-  servers: [{ url: 'http://127.0.0.1:4310', description: '默认轻量版本机服务' }],
+  servers: [{ url: '/', description: '当前 Praxis Control 服务实例' }],
   paths: {
     '/api/openapi.json': {
       get: {
@@ -133,6 +133,16 @@ export const openApiDocument = {
         },
         responses: {
           '200': { description: '已进入关闭流程', content: { 'application/json': { schema: { type: 'object', required: ['status'], properties: { status: { const: 'stopping' } } } } } },
+          '403': errorResponse,
+        },
+      },
+    },
+    '/api/system/runtime': {
+      get: {
+        summary: '使用本机运行时令牌确认当前服务实例',
+        operationId: 'runtimeIdentity',
+        responses: {
+          '200': { description: '令牌属于当前服务实例' },
           '403': errorResponse,
         },
       },

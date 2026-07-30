@@ -100,6 +100,12 @@ describe('PGlite lightweight profile', () => {
       expect(meta.apiVersion).toBe(API_VERSION);
       expect(meta.capabilities.portableExport).toBe(true);
     });
+    await request(app).get('/api/system/runtime').expect(403);
+    await request(app)
+      .get('/api/system/runtime')
+      .set('authorization', 'Bearer api-test-token-api-test-token-api-test-token')
+      .expect(200)
+      .expect({ status: 'ok', apiVersion: API_VERSION, rulesetVersion: config.rulesetVersion });
     await request(app).get('/api/openapi.json').expect(200).expect((response) => {
       expect(response.body.info.version).toBe(`${API_VERSION}.0.0`);
       expect(response.body.paths['/api/dashboard']).toBeTruthy();
@@ -148,12 +154,21 @@ describe('PGlite lightweight profile', () => {
       ...config,
       accessMode: 'tailscale',
       tailscaleAllowedUser: 'owner@example.com',
+    }, {
+      csrfToken: 'tailscale-csrf-token',
+      apiToken: 'tailscale-api-token-tailscale-api-token',
+      shutdownToken: 'tailscale-shutdown-token',
+      requestShutdown: () => undefined,
     });
 
     await request(app).get('/health').expect(200);
     await request(app).get('/').expect(401).expect(/访问未授权/);
     await request(app).get('/api/dashboard').expect(401).expect({ status: 'error', message: '未通过 Tailscale 身份校验。' });
     await request(app).get('/api/dashboard').set('tailscale-user-login', 'intruder@example.com').expect(401);
+    await request(app)
+      .get('/api/dashboard')
+      .set('authorization', 'Bearer tailscale-api-token-tailscale-api-token')
+      .expect(200);
     await request(app)
       .get('/api/dashboard')
       .set('tailscale-user-login', 'Owner@Example.COM')
@@ -177,6 +192,10 @@ describe('PGlite lightweight profile', () => {
     await request(app).get('/health').expect(200);
     await request(app).get('/').expect(302).expect('location', '/login');
     await request(app).get('/api/dashboard').expect(401).expect({ status: 'error', message: '未通过访问认证。' });
+    await request(app)
+      .get('/api/dashboard')
+      .set('authorization', 'Bearer password-api-token-password-api-token')
+      .expect(200);
     await request(app).get('/login').expect(200).expect(/进入实践控制台/);
     await request(app).post('/login').send({ password: 'correct-horse-battery-staple' }).expect(403);
     await request(app).post('/login').type('form').send({ _csrf: 'password-csrf-token', password: 'wrong' }).expect(401);

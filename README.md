@@ -61,7 +61,7 @@ Linux 原生 GUI 遵循 GNOME 桌面约定；Web、CLI 和 TUI 的功能契约�
 
 ## 数据与隐私
 
-轻量版默认只监听 `127.0.0.1:4310`，不依赖 NAS、Docker 或外部 PostgreSQL。事实数据与程序目录分离：
+轻量版默认只监听 `127.0.0.1`，端口由操作系统动态分配并通过运行状态同步给各客户端；不依赖 NAS、Docker 或外部 PostgreSQL。事实数据与程序目录分离：
 
 - Windows：`%LOCALAPPDATA%\PraxisControl`
 - Linux：`$XDG_DATA_HOME/praxis-control`；未设置时为 `~/.local/share/praxis-control`

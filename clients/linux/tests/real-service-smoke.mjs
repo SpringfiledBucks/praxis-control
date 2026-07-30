@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,18 +20,6 @@ function capture(child) {
   child.stdout.setEncoding('utf8').on('data', (chunk) => { output.stdout += chunk; });
   child.stderr.setEncoding('utf8').on('data', (chunk) => { output.stderr += chunk; });
   return output;
-}
-
-async function unusedPort() {
-  const probe = net.createServer();
-  await new Promise((resolve, reject) => {
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', resolve);
-  });
-  const address = probe.address();
-  assert(address && typeof address === 'object');
-  await new Promise((resolve) => probe.close(resolve));
-  return address.port;
 }
 
 async function waitForRuntime(output) {
@@ -83,13 +70,12 @@ async function terminate(child) {
 }
 
 try {
-  const port = await unusedPort();
   service = spawn(process.execPath, [serverPath], {
     env: {
       ...process.env,
       NODE_ENV: 'test',
       APP_HOST: '127.0.0.1',
-      APP_PORT: String(port),
+      APP_PORT: '0',
       PRAXIS_DATA_DIR: path.join(root, 'data'),
       XDG_RUNTIME_DIR: runtimeRoot,
     },
@@ -98,7 +84,8 @@ try {
   service.once('error', (error) => { serviceSpawnError = error; });
   const serviceOutput = capture(service);
   const runtime = await waitForRuntime(serviceOutput);
-  assert.equal(runtime.url, `http://127.0.0.1:${port}`);
+  assert(runtime.port > 0);
+  assert.equal(runtime.url, `http://127.0.0.1:${runtime.port}`);
 
   const metaResponse = await fetch(`${runtime.url}/api/meta`, { signal: AbortSignal.timeout(5_000) });
   assert.equal(metaResponse.status, 200);

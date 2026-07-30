@@ -6,6 +6,7 @@ describe('resolveAppDirectories', () => {
   it('uses LOCALAPPDATA on Windows', () => {
     const result = resolveAppDirectories({ LOCALAPPDATA: 'C:\\Users\\test\\AppData\\Local' }, 'win32', 'C:\\Users\\test');
     expect(result.dataDir).toBe(path.join('C:\\Users\\test\\AppData\\Local', 'PraxisControl'));
+    expect(result.logDir).toBe(path.join(result.dataDir, 'logs'));
   });
 
   it('uses XDG directories on Linux', () => {

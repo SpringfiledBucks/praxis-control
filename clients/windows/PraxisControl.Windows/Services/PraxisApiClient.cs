@@ -16,6 +16,7 @@ internal sealed class PraxisApiClient : IDisposable
     {
         _runtime = runtime;
         _http = new HttpClient { BaseAddress = new Uri(runtime.Url), Timeout = TimeSpan.FromSeconds(5) };
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", runtime.ApiToken);
     }
 
     public static async Task<PraxisApiClient> ConnectAsync(CancellationToken cancellationToken = default)
@@ -79,7 +80,6 @@ internal sealed class PraxisApiClient : IDisposable
         {
             Content = JsonContent.Create(body, options: JsonOptions),
         };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _runtime.ApiToken);
         using var response = await _http.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {

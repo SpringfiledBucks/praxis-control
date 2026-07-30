@@ -25,6 +25,7 @@ describe('shared API contract', () => {
       '/api/meta',
       '/api/openapi.json',
       '/api/system/backup',
+      '/api/system/runtime',
       '/api/system/shutdown',
       '/health',
     ]);

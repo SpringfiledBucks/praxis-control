@@ -5,6 +5,7 @@ export type AppDirectories = {
   dataDir: string;
   databaseDir: string;
   backupDir: string;
+  logDir: string;
   runtimeDir: string;
 };
 
@@ -37,6 +38,7 @@ export function resolveAppDirectories(
     dataDir,
     databaseDir: path.join(dataDir, 'pglite'),
     backupDir: path.join(dataDir, 'backups'),
+    logDir: path.join(dataDir, 'logs'),
     runtimeDir,
   };
 }

@@ -12,12 +12,19 @@ describe('loadConfig', () => {
       SESSION_SECRET_FILE: 'C:\\missing\\unused-session',
     });
     expect(config.host).toBe('127.0.0.1');
-    expect(config.port).toBe(4310);
+    expect(config.port).toBe(0);
     expect(config.databaseMode).toBe('pglite');
     expect(path.isAbsolute(config.pgliteDataDir)).toBe(true);
     expect(path.basename(config.pgliteDataDir)).toBe('pglite');
     expect(config.databaseSsl).toBe(false);
     expect(config.accessMode).toBe('local');
+    expect(config.logDir).toBe(path.join(config.dataDir, 'logs'));
+  });
+
+  it('honors an explicit fixed port and rejects automatic ports for remote profiles', () => {
+    expect(loadConfig({ APP_PORT: '4310' }).port).toBe(4310);
+    expect(() => loadConfig({ ACCESS_MODE: 'tailscale', TAILSCALE_ALLOWED_USER: 'owner@example.com' }))
+      .toThrow('必须显式设置 APP_PORT');
   });
 
   it('requires an explicit PostgreSQL credential source', () => {
@@ -31,6 +38,7 @@ describe('loadConfig', () => {
     try {
       const config = loadConfig({
         DATABASE_MODE: 'postgres',
+        APP_PORT: '4310',
         DATABASE_HOST: 'database',
         DATABASE_NAME: 'praxis_control',
         DATABASE_USER: 'praxis_control',
@@ -48,7 +56,7 @@ describe('loadConfig', () => {
 
   it('requires an allowlisted identity in Tailscale access mode', () => {
     expect(() => loadConfig({ ACCESS_MODE: 'tailscale' })).toThrow('TAILSCALE_ALLOWED_USER');
-    expect(loadConfig({ ACCESS_MODE: 'tailscale', TAILSCALE_ALLOWED_USER: 'User@Example.COM' })).toMatchObject({
+    expect(loadConfig({ ACCESS_MODE: 'tailscale', APP_PORT: '4310', TAILSCALE_ALLOWED_USER: 'User@Example.COM' })).toMatchObject({
       accessMode: 'tailscale',
       tailscaleAllowedUser: 'user@example.com',
     });
@@ -64,6 +72,7 @@ describe('loadConfig', () => {
       expect(() => loadConfig({ ACCESS_MODE: 'password' })).toThrow('ACCESS_PASSWORD_FILE');
       expect(loadConfig({
         ACCESS_MODE: 'password',
+        APP_PORT: '4310',
         ACCESS_PASSWORD_FILE: passwordFile,
         SESSION_SECRET_FILE: sessionFile,
       })).toMatchObject({
