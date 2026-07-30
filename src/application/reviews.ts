@@ -36,8 +36,8 @@ export async function saveWeeklyReview(
   },
 ): Promise<string> {
   const id = randomUUID();
-  await withTransaction(database, async (client) => {
-    await client.query(
+  return withTransaction(database, async (client) => {
+    const saved = await client.query<{ id: string }>(
       `INSERT INTO decision.weekly_reviews (
         id, week_start, checkin_count, reviewed_count, average_decision_quality,
         average_execution_quality, main_contradiction_status, current_bottleneck,
@@ -51,14 +51,16 @@ export async function saveWeeklyReview(
         current_bottleneck=EXCLUDED.current_bottleneck,
         evidence_update=EXCLUDED.evidence_update,
         portfolio_change=EXCLUDED.portfolio_change,
-        next_breakthrough=EXCLUDED.next_breakthrough`,
+        next_breakthrough=EXCLUDED.next_breakthrough
+      RETURNING id`,
       [id, input.weekStart, input.checkinCount, input.reviewedCount, input.averageDecisionQuality,
         input.averageExecutionQuality, input.mainContradictionStatus, input.currentBottleneck,
         input.evidenceUpdate, input.portfolioChange, input.nextBreakthrough],
     );
+    const aggregateId = saved.rows[0]!.id;
     await appendAuditEvent(client, {
-      aggregateType: 'weekly_review', aggregateId: id, eventType: 'WEEKLY_REVIEW_SAVED', payload: input, rulesetVersion,
+      aggregateType: 'weekly_review', aggregateId, eventType: 'WEEKLY_REVIEW_SAVED', payload: input, rulesetVersion,
     });
+    return aggregateId;
   });
-  return id;
 }

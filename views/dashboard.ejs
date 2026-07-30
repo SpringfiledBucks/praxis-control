@@ -9,7 +9,7 @@
 </section>
 
 <section class="metric-grid" aria-label="系统状态">
-  <article class="metric"><span>核心在制品</span><strong><%= data.activeWip %> / 3</strong><small><%= data.activeWip >= 3 ? '新增项目需先替换' : '仍有容量' %></small></article>
+  <article class="metric"><span>核心在制品</span><strong><%= data.activeWip %> / <%= data.wipLimit %></strong><small><%= data.activeWip >= data.wipLimit ? '新增项目需先替换' : '仍有容量' %></small></article>
   <article class="metric"><span>待结果复盘</span><strong><%= data.awaitingReview %></strong><small>好决策与好运气分开看</small></article>
   <article class="metric"><span>近 7 日已闭环</span><strong><%= data.reviewedLast7Days %></strong><small>实践结果才是检验</small></article>
 </section>

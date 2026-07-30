@@ -16,11 +16,12 @@ test('rejects incompatible API versions', () => {
 test('maps dashboard and graph responses to native labels', () => {
   assert.deepEqual(createDashboardViewModel({
     activeWip: 2,
+    wipLimit: 4,
     awaitingReview: 3,
     reviewedLast7Days: 4,
     latestCheckin: { main_action: '完成 Linux 原生壳' },
   }, { nodes: [{}, {}], edges: [{}] }), {
-    activeWip: '2 / 3',
+    activeWip: '2 / 4',
     awaitingReview: '3',
     reviewedLast7Days: '4',
     graphSummary: '2 点 · 1 边',

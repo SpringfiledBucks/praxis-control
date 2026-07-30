@@ -31,6 +31,7 @@ export const dashboardResponseSchema = z.object({
   awaitingReview: z.number().int().nonnegative(),
   reviewedLast7Days: z.number().int().nonnegative(),
   activeWip: z.number().int().nonnegative(),
+  wipLimit: z.number().int().positive(),
 });
 
 const analysisBandSchema = z.enum(['低', '中', '高']);
@@ -38,6 +39,7 @@ const analysisBandSchema = z.enum(['低', '中', '高']);
 export const dailyAnalysisResponseSchema = z.object({
   status: z.enum(['READY', 'CAUTION', 'BLOCKED']),
   usableMinutes: z.number().int().nonnegative(),
+  wipLimit: z.number().int().positive(),
   capacityBand: analysisBandSchema,
   benefitBand: analysisBandSchema,
   feasibilityBand: analysisBandSchema,

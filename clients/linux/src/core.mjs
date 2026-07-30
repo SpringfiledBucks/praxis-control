@@ -18,7 +18,7 @@ export function assertCompatibleMeta(meta) {
 export function createDashboardViewModel(dashboard, graph) {
   const latest = dashboard?.latestCheckin;
   return {
-    activeWip: `${dashboard?.activeWip ?? 0} / 3`,
+    activeWip: `${dashboard?.activeWip ?? 0} / ${dashboard?.wipLimit ?? 3}`,
     awaitingReview: String(dashboard?.awaitingReview ?? 0),
     reviewedLast7Days: String(dashboard?.reviewedLast7Days ?? 0),
     graphSummary: `${graph?.nodes?.length ?? 0} 点 · ${graph?.edges?.length ?? 0} 边`,

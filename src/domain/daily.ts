@@ -23,6 +23,7 @@ export const dailyInputSchema = z.object({
   hasRecoveryPlan: z.boolean().default(false),
   opensNewCoreProject: z.boolean().default(false),
   activeWip: z.coerce.number().int().min(0).max(99).default(0),
+  wipLimit: z.coerce.number().int().min(1).max(99).default(3),
 });
 
 export type DailyInput = z.infer<typeof dailyInputSchema>;
@@ -31,6 +32,7 @@ export type AnalysisStatus = 'READY' | 'CAUTION' | 'BLOCKED';
 export type DailyAnalysis = {
   status: AnalysisStatus;
   usableMinutes: number;
+  wipLimit: number;
   capacityBand: '低' | '中' | '高';
   benefitBand: '低' | '中' | '高';
   feasibilityBand: '低' | '中' | '高';
@@ -102,10 +104,10 @@ export function analyzeDaily(input: DailyInput): DailyAnalysis {
     triggeredRules.push('RESOURCE-FIT-001');
   }
 
-  if (status !== 'BLOCKED' && input.opensNewCoreProject && input.activeWip >= 3) {
+  if (status !== 'BLOCKED' && input.opensNewCoreProject && input.activeWip >= input.wipLimit) {
     status = 'CAUTION';
-    recommendation = '不要直接新增核心项目：先暂停、完成或退出一个现有项目。';
-    warnings.push('核心在制品已经达到 3 个。');
+    recommendation = `不要直接新增核心项目：当前核心在制品为 ${input.activeWip} / ${input.wipLimit}，请先暂停、完成或退出一个现有项目。`;
+    warnings.push(`核心在制品已经达到规则上限 ${input.wipLimit}。`);
     triggeredRules.push('WIP-LIMIT-001');
   }
 
@@ -132,6 +134,7 @@ export function analyzeDaily(input: DailyInput): DailyAnalysis {
   return {
     status,
     usableMinutes,
+    wipLimit: input.wipLimit,
     capacityBand: band(Math.min(input.energy, input.attention)),
     benefitBand: band(benefit),
     feasibilityBand: band(feasibility),

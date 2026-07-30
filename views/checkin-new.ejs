@@ -37,7 +37,7 @@
         <label>最小可交付结果<textarea name="deliverable" required placeholder="外部可观察、可验收的结果"><%= latest?.deliverable || '' %></textarea></label>
         <div class="field-grid two">
           <label>预计投入分钟<input type="number" name="estimatedMinutes" min="1" max="1440" value="90" required></label>
-          <label>当前核心 WIP<input type="number" name="activeWip" min="0" max="99" value="<%= activeWip %>" readonly></label>
+          <label>当前核心 WIP<input type="text" value="<%= activeWip %> / <%= wipLimit %>" readonly><input type="hidden" name="activeWip" value="<%= activeWip %>"><input type="hidden" name="wipLimit" value="<%= wipLimit %>"></label>
         </div>
         <label>停止条件<textarea name="stopCondition" required placeholder="出现什么情况就停止、缩小或改为调查？"></textarea></label>
         <label>今天明确不做<textarea name="explicitNotDo" placeholder="防止范围膨胀"></textarea></label>

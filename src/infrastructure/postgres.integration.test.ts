@@ -7,6 +7,7 @@ import { createProject } from '../application/projects.js';
 import { loadConfig, type AppConfig } from '../config.js';
 import { createPortableExport } from '../application/export.js';
 import { importPortableSnapshot } from '../application/import.js';
+import { loadPortfolioContext } from '../application/portfolio.js';
 import { verifyAuditChain } from './audit.js';
 import { createDatabase, type Database } from './db.js';
 import { runMigrations } from './migrations.js';
@@ -78,5 +79,23 @@ describe.runIf(Boolean(postgresTestUrl))('PostgreSQL full profile', () => {
     expect(snapshot.backend).toBe('postgres');
     expect(snapshot.counts.projects).toBeGreaterThan(0);
     expect(snapshot.counts.auditEvents).toBeGreaterThan(0);
+  });
+
+  it('serializes concurrent project admission at the PostgreSQL WIP boundary', async () => {
+    expect(await loadPortfolioContext(database, config.rulesetVersion)).toMatchObject({ activeWip: 2, wipLimit: 3 });
+    const input = (suffix: string) => ({
+      title: `并发准入项目 ${suffix}`,
+      kind: 'explore',
+      currentBottleneck: '验证 PostgreSQL 事务锁不会越过 WIP 上限',
+      exitCondition: '两个并发请求只能有一个进入核心队列',
+    });
+    const results = await Promise.allSettled([
+      createProject(database, config.rulesetVersion, input('A')),
+      createProject(database, config.rulesetVersion, input('B')),
+    ]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.find((result) => result.status === 'rejected');
+    expect(rejected).toMatchObject({ status: 'rejected', reason: { code: 'WIP_LIMIT_REACHED', statusCode: 409 } });
+    expect(await loadPortfolioContext(database, config.rulesetVersion)).toMatchObject({ activeWip: 3, wipLimit: 3 });
   });
 });

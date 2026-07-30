@@ -3,6 +3,7 @@ import { analyzeDaily, type DailyAnalysis, type DailyInput } from '../domain/dai
 import { appendAuditEvent } from '../infrastructure/audit.js';
 import { withTransaction, type Database } from '../infrastructure/db.js';
 import { formatDateOnly } from '../platform/dates.js';
+import { loadPortfolioContext } from './portfolio.js';
 
 export type DailyRecord = DailyInput & {
   id: string;
@@ -15,15 +16,17 @@ export type DailyRecord = DailyInput & {
 export class CheckinService {
   constructor(private readonly database: Database, private readonly rulesetVersion: string) {}
 
-  analyze(input: DailyInput): DailyAnalysis {
-    return analyzeDaily(input);
+  async analyze(input: DailyInput): Promise<DailyAnalysis> {
+    const portfolio = await loadPortfolioContext(this.database, this.rulesetVersion);
+    return analyzeDaily({ ...input, ...portfolio });
   }
 
   async create(input: DailyInput): Promise<string> {
     const id = randomUUID();
-    const analysis = analyzeDaily(input);
-
     await withTransaction(this.database, async (client) => {
+      const portfolio = await loadPortfolioContext(client, this.rulesetVersion);
+      const authoritativeInput = { ...input, ...portfolio };
+      const analysis = analyzeDaily(authoritativeInput);
       await client.query(
         `INSERT INTO decision.daily_checkins (
           id, checkin_date, available_minutes, reserve_percent, energy, attention,
@@ -38,12 +41,15 @@ export class CheckinService {
           $19,$20,$21,$22,$23,$24,$25::jsonb,$26,$27
         )`,
         [
-          id, input.checkinDate, input.availableMinutes, input.reservePercent, input.energy, input.attention,
-          input.stageGoal, input.mainContradiction, input.bottleneck, input.mainAction, input.deliverable,
-          input.estimatedMinutes, input.stopCondition, input.explicitNotDo,
-          input.contradictionContribution, input.bottleneckContribution, input.evidenceStrength,
-          input.riskLevel, input.hasAuthorization, input.lossTolerable, input.hasRecoveryPlan,
-          input.opensNewCoreProject, input.activeWip, analysis.status, JSON.stringify(analysis),
+          id, authoritativeInput.checkinDate, authoritativeInput.availableMinutes, authoritativeInput.reservePercent,
+          authoritativeInput.energy, authoritativeInput.attention, authoritativeInput.stageGoal,
+          authoritativeInput.mainContradiction, authoritativeInput.bottleneck, authoritativeInput.mainAction,
+          authoritativeInput.deliverable, authoritativeInput.estimatedMinutes, authoritativeInput.stopCondition,
+          authoritativeInput.explicitNotDo, authoritativeInput.contradictionContribution,
+          authoritativeInput.bottleneckContribution, authoritativeInput.evidenceStrength,
+          authoritativeInput.riskLevel, authoritativeInput.hasAuthorization, authoritativeInput.lossTolerable,
+          authoritativeInput.hasRecoveryPlan, authoritativeInput.opensNewCoreProject, authoritativeInput.activeWip,
+          analysis.status, JSON.stringify(analysis),
           this.rulesetVersion, 'planned',
         ],
       );
@@ -51,14 +57,14 @@ export class CheckinService {
       await client.query(
         `INSERT INTO core.knowledge_objects(id, object_type, title, status, attributes)
          VALUES ($1, 'decision', $2, 'planned', jsonb_build_object('checkin_date', $3::date))`,
-        [id, input.mainAction, input.checkinDate],
+        [id, authoritativeInput.mainAction, authoritativeInput.checkinDate],
       );
 
       await appendAuditEvent(client, {
         aggregateType: 'daily_checkin',
         aggregateId: id,
         eventType: 'CHECKIN_ANALYZED_AND_SAVED',
-        payload: { input, analysis },
+        payload: { input: authoritativeInput, analysis },
         rulesetVersion: this.rulesetVersion,
       });
     });
@@ -164,6 +170,7 @@ function mapCheckin(row: Record<string, unknown>): DailyRecord {
     hasRecoveryPlan: Boolean(row.has_recovery_plan),
     opensNewCoreProject: Boolean(row.opens_new_core_project),
     activeWip: Number(row.active_wip),
+    wipLimit: Number((row.analysis as DailyAnalysis)?.wipLimit ?? 3),
     analysis: row.analysis as DailyAnalysis,
     rulesetVersion: String(row.ruleset_version),
     lifecycleStatus: String(row.lifecycle_status),

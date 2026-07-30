@@ -1,5 +1,6 @@
 import type { Database } from '../infrastructure/db.js';
 import { formatDateOnly } from '../platform/dates.js';
+import { loadPortfolioContext } from './portfolio.js';
 
 export type DashboardData = {
   activeProjects: Array<{ id: string; title: string; kind: string; current_bottleneck: string }>;
@@ -7,10 +8,11 @@ export type DashboardData = {
   awaitingReview: number;
   reviewedLast7Days: number;
   activeWip: number;
+  wipLimit: number;
 };
 
-export async function loadDashboard(database: Database): Promise<DashboardData> {
-  const [projects, checkins, counters] = await Promise.all([
+export async function loadDashboard(database: Database, rulesetVersion: string): Promise<DashboardData> {
+  const [projects, checkins, counters, portfolio] = await Promise.all([
     database.query<{ id: string; title: string; kind: string; current_bottleneck: string }>(
       `SELECT id, title, kind, current_bottleneck FROM core.projects WHERE status IN ('active','maintaining') ORDER BY created_at`,
     ),
@@ -21,6 +23,7 @@ export async function loadDashboard(database: Database): Promise<DashboardData> 
       count(*) FILTER (WHERE lifecycle_status <> 'reviewed' AND lifecycle_status <> 'cancelled')::int AS awaiting_review,
       count(*) FILTER (WHERE lifecycle_status = 'reviewed' AND checkin_date >= current_date - 6)::int AS reviewed_last_7_days
       FROM decision.daily_checkins`),
+    loadPortfolioContext(database, rulesetVersion),
   ]);
 
   const latestCheckin = checkins.rows[0]
@@ -32,6 +35,7 @@ export async function loadDashboard(database: Database): Promise<DashboardData> 
     latestCheckin,
     awaitingReview: Number(counters.rows[0]?.awaiting_review ?? 0),
     reviewedLast7Days: Number(counters.rows[0]?.reviewed_last_7_days ?? 0),
-    activeWip: projects.rowCount ?? 0,
+    activeWip: portfolio.activeWip,
+    wipLimit: portfolio.wipLimit,
   };
 }

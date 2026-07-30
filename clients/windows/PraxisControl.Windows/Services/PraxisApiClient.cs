@@ -100,7 +100,8 @@ internal sealed record DashboardResponse(
     JsonElement? LatestCheckin,
     int AwaitingReview,
     int ReviewedLast7Days,
-    int ActiveWip);
+    int ActiveWip,
+    int WipLimit);
 
 internal sealed record ProjectSummary(
     string Id,

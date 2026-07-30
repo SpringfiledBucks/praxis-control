@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { CheckinService } from '../application/checkins.js';
 import { loadDashboard } from '../application/dashboard.js';
-import { changeProjectStatus, createProject, listProjects } from '../application/projects.js';
+import { changeProjectStatus, createProject, loadProjectPortfolio } from '../application/projects.js';
 import { loadWeeklySummary, saveWeeklyReview } from '../application/reviews.js';
 import { loadKnowledgeGraph } from '../application/graph.js';
 import { createPortableExport } from '../application/export.js';
@@ -11,6 +11,7 @@ import { parseDailyBody } from './parsing.js';
 import type { Database } from '../infrastructure/db.js';
 import { API_VERSION } from '../contracts/api.js';
 import { openApiDocument } from '../contracts/openapi.js';
+import { projectStatuses } from '../domain/portfolio.js';
 
 export type SystemControl = {
   csrfToken: string;
@@ -26,28 +27,29 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.get('/', async (_req, res, next) => {
     try {
-      const data = await loadDashboard(database);
+      const data = await loadDashboard(database, rulesetVersion);
       res.render('dashboard', { title: '今日工作台', data });
     } catch (error) { next(error); }
   });
 
   router.get('/checkins/new', async (_req, res, next) => {
     try {
-      const dashboard = await loadDashboard(database);
+      const dashboard = await loadDashboard(database, rulesetVersion);
       const latest = dashboard.latestCheckin;
       res.render('checkin-new', {
         title: '今日决策',
         today: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' }),
         activeWip: dashboard.activeWip,
+        wipLimit: dashboard.wipLimit,
         latest,
       });
     } catch (error) { next(error); }
   });
 
-  router.post('/api/checkins/analyze', (req, res, next) => {
+  router.post('/api/checkins/analyze', async (req, res, next) => {
     try {
       const input = parseDailyBody(req.body);
-      res.json(checkins.analyze(input));
+      res.json(await checkins.analyze(input));
     } catch (error) { next(error); }
   });
 
@@ -60,7 +62,7 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.get('/api/dashboard', async (_req, res, next) => {
     try {
-      res.json(await loadDashboard(database));
+      res.json(await loadDashboard(database, rulesetVersion));
     } catch (error) { next(error); }
   });
 
@@ -103,15 +105,17 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.get('/checkins/:id', async (req, res, next) => {
     try {
-      const record = await checkins.get(req.params.id);
+      const id = z.uuid().parse(req.params.id);
+      const record = await checkins.get(id);
       if (!record) return res.status(404).render('error', { title: '未找到记录', message: '该日常决策不存在。' });
-      const outcome = await checkins.getOutcome(req.params.id);
+      const outcome = await checkins.getOutcome(id);
       return res.render('checkin-detail', { title: '决策详情', record, outcome });
     } catch (error) { return next(error); }
   });
 
   router.post('/checkins/:id/outcome', async (req, res, next) => {
     try {
+      const id = z.uuid().parse(req.params.id);
       const schema = z.object({
         actualResult: z.string().trim().min(2).max(2000),
         decisionQuality: z.coerce.number().int().min(0).max(10),
@@ -121,8 +125,8 @@ export function createRouter(database: Database, rulesetVersion: string, system?
         learning: z.string().trim().min(2).max(2000),
         nextAdjustment: z.string().trim().min(2).max(2000),
       });
-      await checkins.recordOutcome(req.params.id, schema.parse(req.body));
-      res.redirect(`/checkins/${req.params.id}`);
+      await checkins.recordOutcome(id, schema.parse(req.body));
+      res.redirect(`/checkins/${id}`);
     } catch (error) { next(error); }
   });
 
@@ -148,7 +152,7 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.get('/projects', async (_req, res, next) => {
     try {
-      res.render('projects', { title: '项目组合', projects: await listProjects(database) });
+      res.render('projects', { title: '项目组合', portfolio: await loadProjectPortfolio(database, rulesetVersion) });
     } catch (error) { next(error); }
   });
 
@@ -167,8 +171,9 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.post('/projects/:id/status', async (req, res, next) => {
     try {
-      const status = z.enum(['active', 'maintaining', 'paused', 'retiring', 'retired']).parse(req.body.status);
-      await changeProjectStatus(database, rulesetVersion, req.params.id, status);
+      const id = z.uuid().parse(req.params.id);
+      const status = z.enum(projectStatuses).parse(req.body.status);
+      await changeProjectStatus(database, rulesetVersion, id, status);
       res.redirect('/projects');
     } catch (error) { next(error); }
   });

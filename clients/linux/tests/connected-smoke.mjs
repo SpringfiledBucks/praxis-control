@@ -18,6 +18,7 @@ const responses = {
     awaitingReview: 2,
     reviewedLast7Days: 3,
     activeWip: 1,
+    wipLimit: 3,
   },
   '/api/graph': { nodes: [{ id: 'n1' }], edges: [{ id: 'e1' }] },
 };

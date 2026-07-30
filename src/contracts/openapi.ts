@@ -181,7 +181,7 @@ export const openApiDocument = {
         },
       },
       Dashboard: {
-        type: 'object', required: ['activeProjects', 'latestCheckin', 'awaitingReview', 'reviewedLast7Days', 'activeWip'], additionalProperties: false,
+        type: 'object', required: ['activeProjects', 'latestCheckin', 'awaitingReview', 'reviewedLast7Days', 'activeWip', 'wipLimit'], additionalProperties: false,
         properties: {
           activeProjects: {
             type: 'array', items: {
@@ -193,6 +193,7 @@ export const openApiDocument = {
           awaitingReview: { type: 'integer', minimum: 0 },
           reviewedLast7Days: { type: 'integer', minimum: 0 },
           activeWip: { type: 'integer', minimum: 0 },
+          wipLimit: { type: 'integer', minimum: 1 },
         },
       },
       DailyInput: {
@@ -220,15 +221,17 @@ export const openApiDocument = {
           lossTolerable: { type: 'boolean', default: true },
           hasRecoveryPlan: { type: 'boolean', default: false },
           opensNewCoreProject: { type: 'boolean', default: false },
-          activeWip: { type: 'integer', minimum: 0, maximum: 99, default: 0 },
+          activeWip: { type: 'integer', minimum: 0, maximum: 99, default: 0, description: '客户端显示上下文；服务端分析时以事实库重新计算。' },
+          wipLimit: { type: 'integer', minimum: 1, maximum: 99, default: 3, description: '客户端显示上下文；服务端分析时以当前规则版本覆盖。' },
         },
       },
       DailyAnalysis: {
         type: 'object', additionalProperties: false,
-        required: ['status', 'usableMinutes', 'capacityBand', 'benefitBand', 'feasibilityBand', 'riskBand', 'recommendation', 'reasons', 'warnings', 'triggeredRules', 'assumptions', 'nextReviewTrigger'],
+        required: ['status', 'usableMinutes', 'wipLimit', 'capacityBand', 'benefitBand', 'feasibilityBand', 'riskBand', 'recommendation', 'reasons', 'warnings', 'triggeredRules', 'assumptions', 'nextReviewTrigger'],
         properties: {
           status: { enum: ['READY', 'CAUTION', 'BLOCKED'] },
           usableMinutes: { type: 'integer', minimum: 0 },
+          wipLimit: { type: 'integer', minimum: 1 },
           capacityBand: { enum: ['低', '中', '高'] },
           benefitBand: { enum: ['低', '中', '高'] },
           feasibilityBand: { enum: ['低', '中', '高'] },

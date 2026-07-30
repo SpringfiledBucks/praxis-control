@@ -2,7 +2,9 @@ import path from 'node:path';
 import compression from 'compression';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
+import { ZodError } from 'zod';
 import type { AppConfig } from './config.js';
+import { BusinessRuleError, ResourceNotFoundError } from './application/errors.js';
 import type { Database } from './infrastructure/db.js';
 import { LoginRateLimiter, PasswordAccess } from './security/password-access.js';
 import { createRouter, type SystemControl } from './web/routes.js';
@@ -108,7 +110,12 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : '未知错误';
     const isApi = req.path.startsWith('/api/') || req.path === '/health';
-    const status = message.includes('duplicate key') ? 409 : message.includes('validation') ? 400 : 500;
+    const status = error instanceof BusinessRuleError ? error.statusCode
+      : error instanceof ResourceNotFoundError ? error.statusCode
+        : error instanceof ZodError ? 400
+          : message.includes('duplicate key') ? 409
+            : message.includes('validation') ? 400
+              : 500;
     if (isApi) return res.status(status).json({ status: 'error', message });
     return res.status(status).render('error', { title: '操作未完成', message });
   });

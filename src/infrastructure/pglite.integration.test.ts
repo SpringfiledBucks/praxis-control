@@ -5,6 +5,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../app.js';
 import { ensureSeedData } from '../application/bootstrap.js';
 import { changeProjectStatus, createProject } from '../application/projects.js';
+import { CheckinService } from '../application/checkins.js';
+import { loadPortfolioContext } from '../application/portfolio.js';
+import { saveWeeklyReview } from '../application/reviews.js';
 import { loadConfig, type AppConfig } from '../config.js';
 import { restorePGliteBackup } from './backup.js';
 import { verifyAuditChain } from './audit.js';
@@ -147,6 +150,81 @@ describe('PGlite lightweight profile', () => {
         expect(snapshot.counts.dailyCheckins).toBeGreaterThan(0);
         expect(snapshot.counts.auditEvents).toBeGreaterThan(0);
       });
+  });
+
+  it('enforces authoritative WIP capacity and ignores client-supplied portfolio counts', async () => {
+    let context = await loadPortfolioContext(database, config.rulesetVersion);
+    while (context.activeWip < context.wipLimit) {
+      await createProject(database, config.rulesetVersion, {
+        title: `占用核心容量 ${context.activeWip + 1}`,
+        kind: 'build',
+        currentBottleneck: '验证核心在制品上限由服务端强制执行',
+        exitCondition: '达到上限后拒绝新增项目',
+      });
+      context = await loadPortfolioContext(database, config.rulesetVersion);
+    }
+
+    await expect(createProject(database, config.rulesetVersion, {
+      title: '不应进入的第四个项目',
+      kind: 'explore',
+      currentBottleneck: '客户端可能绕过页面直接调用服务',
+      exitCondition: '服务端返回 WIP_LIMIT_REACHED',
+    })).rejects.toMatchObject({ code: 'WIP_LIMIT_REACHED', statusCode: 409 });
+
+    const fullPortfolioApp = createApp(database, config, {
+      csrfToken: 'portfolio-csrf-token',
+      apiToken: 'portfolio-api-token-portfolio-api-token',
+      shutdownToken: 'portfolio-shutdown-token',
+      requestShutdown: () => undefined,
+    });
+    await request(fullPortfolioApp)
+      .post('/projects')
+      .type('form')
+      .send({
+        _csrf: 'portfolio-csrf-token', title: '绕过页面提交的项目', kind: 'build',
+        currentBottleneck: '验证 HTTP 层保持业务冲突语义', exitCondition: '返回 409 而不是写入',
+      })
+      .expect(409)
+      .expect(/核心在制品已达到/);
+
+    const service = new CheckinService(database, config.rulesetVersion);
+    const input = JSON.parse(await readFile(path.join(process.cwd(), 'src', 'infrastructure', 'test-fixtures', 'daily-input.json'), 'utf8'));
+    const analysis = await service.analyze({ ...input, opensNewCoreProject: true, activeWip: 0, wipLimit: 99 });
+    expect(analysis.status).toBe('CAUTION');
+    expect(analysis.wipLimit).toBe(context.wipLimit);
+    expect(analysis.triggeredRules).toContain('WIP-LIMIT-001');
+
+    const active = await database.query<{ id: string }>(
+      "SELECT id FROM core.projects WHERE status IN ('active', 'maintaining') ORDER BY created_at LIMIT 1",
+    );
+    await expect(changeProjectStatus(database, config.rulesetVersion, active.rows[0]!.id, 'retired'))
+      .rejects.toMatchObject({ code: 'INVALID_PROJECT_TRANSITION', statusCode: 409 });
+    await changeProjectStatus(database, config.rulesetVersion, active.rows[0]!.id, 'paused');
+    await expect(createProject(database, config.rulesetVersion, {
+      title: '替换退出项目后的新项目',
+      kind: 'breakthrough',
+      currentBottleneck: '验证释放容量后可以进入核心队列',
+      exitCondition: '创建成功且 WIP 仍等于规则上限',
+    })).resolves.toMatch(/^[0-9a-f-]{36}$/);
+    expect((await loadPortfolioContext(database, config.rulesetVersion)).activeWip).toBe(context.wipLimit);
+  });
+
+  it('keeps repeated weekly reviews on one aggregate audit chain', async () => {
+    const input = {
+      weekStart: '2026-07-27', checkinCount: 1, reviewedCount: 1,
+      averageDecisionQuality: 8, averageExecutionQuality: 7,
+      mainContradictionStatus: '主要矛盾仍然有效', currentBottleneck: '业务规则缺少服务端强制',
+      evidenceUpdate: 'WIP 绕过测试已经复现', portfolioChange: '暂停低优先级项目',
+      nextBreakthrough: '完成第一批组合治理规则',
+    };
+    const firstId = await saveWeeklyReview(database, config.rulesetVersion, input);
+    const secondId = await saveWeeklyReview(database, config.rulesetVersion, { ...input, evidenceUpdate: '服务端强制测试已经通过' });
+    expect(secondId).toBe(firstId);
+    const events = await database.query<{ aggregate_id: string }>(
+      "SELECT aggregate_id FROM governance.audit_events WHERE aggregate_type = 'weekly_review' ORDER BY created_at",
+    );
+    expect(events.rows.filter((event) => event.aggregate_id === firstId)).toHaveLength(2);
+    expect(await verifyAuditChain(database)).toMatchObject({ valid: true });
   });
 
   it('enforces the configured Tailscale identity before serving full-profile data', async () => {

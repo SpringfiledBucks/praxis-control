@@ -25,6 +25,7 @@ function baseInput(overrides: Partial<DailyInput> = {}): DailyInput {
     hasRecoveryPlan: false,
     opensNewCoreProject: false,
     activeWip: 1,
+    wipLimit: 3,
     ...overrides,
   };
 }
@@ -59,6 +60,13 @@ describe('analyzeDaily', () => {
     const result = analyzeDaily(baseInput({ activeWip: 3, opensNewCoreProject: true }));
     expect(result.status).toBe('CAUTION');
     expect(result.triggeredRules).toContain('WIP-LIMIT-001');
+  });
+
+  it('uses the ruleset WIP limit instead of a hard-coded threshold', () => {
+    const result = analyzeDaily(baseInput({ activeWip: 4, wipLimit: 5, opensNewCoreProject: true }));
+    expect(result.status).toBe('READY');
+    expect(result.wipLimit).toBe(5);
+    expect(result.triggeredRules).not.toContain('WIP-LIMIT-001');
   });
 
   it('does not let strong benefit compensate for insufficient resources', () => {

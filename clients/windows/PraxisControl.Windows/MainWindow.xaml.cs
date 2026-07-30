@@ -112,7 +112,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             var graph = await graphTask;
 
             _client = client;
-            ActiveWip = $"{dashboard.ActiveWip} / 3";
+            ActiveWip = $"{dashboard.ActiveWip} / {dashboard.WipLimit}";
             AwaitingReview = dashboard.AwaitingReview.ToString();
             ReviewedLast7Days = dashboard.ReviewedLast7Days.ToString();
             GraphSummary = $"{graph.Nodes.Count} 点 · {graph.Edges.Count} 边";
