@@ -22,6 +22,7 @@ describe.runIf(Boolean(postgresTestUrl))('PostgreSQL full profile', () => {
   beforeAll(async () => {
     config = loadConfig({
       NODE_ENV: 'test',
+      APP_PORT: '4310',
       DATABASE_MODE: 'postgres',
       DATABASE_URL: postgresTestUrl,
       DATABASE_SSL: 'false',
@@ -53,7 +54,7 @@ describe.runIf(Boolean(postgresTestUrl))('PostgreSQL full profile', () => {
 
   afterAll(async () => {
     await database?.close();
-    await rm(sourceRoot, { recursive: true, force: true });
+    if (sourceRoot) await rm(sourceRoot, { recursive: true, force: true });
   });
 
   it('runs migrations idempotently against a real PostgreSQL server', async () => {
