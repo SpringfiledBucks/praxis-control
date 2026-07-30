@@ -1,6 +1,6 @@
 # 本机运行时生命周期与跨客户端发现审计
 
-状态：PARTIAL
+状态：VERIFIED
 
 日期：2026-07-30
 
@@ -36,7 +36,7 @@
 
 ## 剩余风险和门槛
 
-- 当前主机是 Windows，无法在本轮本机执行 GTK/AT-SPI 真实 GUI；Gitea Linux 作业通过后才能把跨平台结论从 PARTIAL 提升为 VERIFIED。
+- GTK/AT-SPI 真实 GUI 由 Gitea Linux 作业在 Xvfb/DBus 环境执行，本机 Windows 不重复模拟该环境。
 - 启动锁是用户目录中的原子文件加 PID 校验，不是操作系统持有式文件锁。崩溃后的死 PID 可自动恢复；极端 PID 复用会安全地拒绝启动，需要 `doctor` 辅助人工确认，不会冒险并发打开数据库。
 - `service.log` 当前为追加文件，尚未实现大小轮换；日志内容不写控制令牌，但长期运行仍需后续增加有界轮换。
 - 远程设备上的原生 GUI 尚未提供独立的远程服务配置流程；当前全量版跨设备共用入口仍是经过认证的 Web。这不影响本机轻量版验收，但属于后续客户端范围。
@@ -46,3 +46,5 @@
 提交首次推送后，Gitea Actions run 81 的三个作业均在 checkout 阶段失败。日志确认 Gitea 重启后的 `github.server_url` 为 `http://localhost:3000`，作业容器因此错误连接自身，而不是 Gitea 服务；此前 run 80 已有同样失败，说明这是既有 CI 环境漂移，不是本轮代码测试失败。
 
 工作流改为给每个作业容器声明 Docker `host-gateway`，并通过通用的 `http://host.docker.internal:3000` 回连宿主机发布的 Gitea 端口。该地址不包含 NAS、账号或受控网络信息。已使用同一 CI 镜像在 NAS 创建一次性 `--rm` 容器，成功读取 Gitea 1.26.1 版本端点；最终状态仍以修复提交触发的完整 Gitea 作业为准。
+
+修复提交触发的 run 82 已证明三个作业均能完成 checkout；其中 PostgreSQL 作业随后暴露测试夹具未给全量模式提供显式 `APP_PORT` 的契约漂移，并在初始化失败时产生二次清理错误。测试夹具已改为显式固定端口，且清理逻辑允许初始化未完成。最终 run 83 的 `verify`、`linux-gui-smoke`、`postgres-contract` 三个作业全部通过，因此本报告状态提升为 VERIFIED。
