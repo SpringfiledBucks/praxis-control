@@ -3,7 +3,7 @@
 <section class="timeline">
   <% if (!records.length) { %><div class="empty panel"><p>暂无记录。</p></div><% } %>
   <% records.forEach((record) => { %>
-    <a class="timeline-item" href="/checkins/<%= record.id %>"><time><%= record.checkinDate %></time><span class="status <%= record.analysis.status.toLowerCase() %>"><%= record.analysis.status %></span><div><strong><%= record.mainAction %></strong><p><%= record.deliverable %></p></div><small><%= record.lifecycleStatus === 'reviewed' ? '已闭环' : '待复盘' %></small></a>
+    <a class="timeline-item" href="/checkins/<%= record.id %>"><time><%= record.checkinDate %></time><span class="status <%= record.analysis.status.toLowerCase() %>"><%= record.analysis.status %></span><div><strong><%= record.mainAction %></strong><p><%= record.deliverable %><% if (record.projectTitle) { %> · <%= record.projectTitle %><% } %></p></div><small><%= lifecycleLabel(record.lifecycleStatus) %></small></a>
   <% }) %>
 </section>
 <%- include('partials/foot') %>

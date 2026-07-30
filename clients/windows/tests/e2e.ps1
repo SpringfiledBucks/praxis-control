@@ -96,7 +96,7 @@ try {
     if ([string]::IsNullOrWhiteSpace([string]$dashboard.latestCheckin.id)) {
         throw 'Dashboard did not return the check-in saved by the Windows client.'
     }
-    if ($dashboard.latestCheckin.analysis_status -ne 'READY' -or $dashboard.awaitingReview -ne 1) {
+    if ($dashboard.latestCheckin.analysis_status -ne 'READY' -or $dashboard.awaitingReview -ne 0) {
         throw 'Unexpected analysis status or pending-review count after the Windows save.'
     }
 

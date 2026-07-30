@@ -145,6 +145,7 @@ internal sealed record DailyInput(
     bool LossTolerable,
     bool HasRecoveryPlan,
     bool OpensNewCoreProject,
+    string? ProjectId,
     int ActiveWip);
 
 internal sealed record DailyAnalysisResponse(

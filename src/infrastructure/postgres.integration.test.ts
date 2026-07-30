@@ -1,9 +1,10 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ensureSeedData } from '../application/bootstrap.js';
 import { createProject } from '../application/projects.js';
+import { CheckinService } from '../application/checkins.js';
 import { loadConfig, type AppConfig } from '../config.js';
 import { createPortableExport } from '../application/export.js';
 import { importPortableSnapshot } from '../application/import.js';
@@ -19,6 +20,7 @@ describe.runIf(Boolean(postgresTestUrl))('PostgreSQL full profile', () => {
   let database: Database;
   let sourceRoot: string;
   let importedCounts: Record<string, number>;
+  let importedProjectId: string;
 
   beforeAll(async () => {
     config = loadConfig({
@@ -38,11 +40,15 @@ describe.runIf(Boolean(postgresTestUrl))('PostgreSQL full profile', () => {
     try {
       await runMigrations(source);
       await ensureSeedData(source, sourceConfig.rulesetVersion);
-      await createProject(source, sourceConfig.rulesetVersion, {
+      importedProjectId = await createProject(source, sourceConfig.rulesetVersion, {
         title: 'PGlite 到 PostgreSQL 迁移验收',
         kind: 'build',
         currentBottleneck: '尚未验证真实 PostgreSQL 导入',
         exitCondition: '逐表计数与审计链一致',
+      });
+      const input = JSON.parse(await readFile(path.join(process.cwd(), 'src', 'infrastructure', 'test-fixtures', 'daily-input.json'), 'utf8'));
+      await new CheckinService(source, sourceConfig.rulesetVersion).create({
+        ...input, checkinDate: '2026-07-29', mainAction: '验证跨数据库项目决策关系', projectId: importedProjectId,
       });
       importedCounts = await importPortableSnapshot(
         database,
@@ -62,8 +68,14 @@ describe.runIf(Boolean(postgresTestUrl))('PostgreSQL full profile', () => {
     expect(database.backend).toBe('postgres');
     expect(await runMigrations(database)).toEqual([]);
     const migrations = await database.query<{ version: string }>('SELECT version FROM governance.schema_migrations ORDER BY version');
-    expect(migrations.rows.map((row) => row.version)).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads']);
+    expect(migrations.rows.map((row) => row.version)).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads', '004_decision_project_lifecycle']);
     expect(importedCounts.projects).toBeGreaterThan(0);
+    expect(importedCounts.dailyCheckins).toBeGreaterThan(0);
+    const importedDecision = await database.query<{ project_id: string }>(
+      'SELECT project_id FROM decision.daily_checkins WHERE project_id = $1',
+      [importedProjectId],
+    );
+    expect(importedDecision.rows).toEqual([{ project_id: importedProjectId }]);
   });
 
   it('preserves transactional audit and portable export contracts', async () => {

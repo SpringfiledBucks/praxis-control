@@ -1,0 +1,61 @@
+<%- include('partials/head', { title }) %>
+<section class="page-heading">
+  <div><p class="eyebrow">先校准，再记录</p><h1>Praxis Control 使用教程</h1><p>这些分数不是绩效，也不是要凑满的点数。它们用于把判断依据显性化，让未来的你知道当时为什么这样决定。</p></div>
+  <a class="button primary" href="/checkins/new">开始一条决策</a>
+</section>
+
+<section class="panel guide-section">
+  <p class="eyebrow">两分钟流程</p><h2>一条日常决策怎么完成</h2>
+  <ol class="guide-steps">
+    <li><strong>记录现实。</strong>填写真正可支配的时间、精力和注意力，不填写理想状态。</li>
+    <li><strong>选择方向。</strong>写清阶段目标、主要矛盾和当前瓶颈；如属于现有项目，选择关联项目。</li>
+    <li><strong>缩成一个行动。</strong>定义可观察交付物、预计时间、停止条件和明确不做。</li>
+    <li><strong>独立评分。</strong>分别评估矛盾贡献、瓶颈贡献和证据强度，然后检查风险硬门槛。</li>
+    <li><strong>先分析再保存。</strong>阅读 READY、CAUTION 或 BLOCKED 的理由，保存的是当时输入和规则快照。</li>
+    <li><strong>执行并复盘。</strong>把状态推进到执行中、待复盘，最后记录结果并区分决策质量与执行质量。</li>
+  </ol>
+</section>
+
+<section class="panel guide-section" id="scoring">
+  <p class="eyebrow">0–10 分配</p><h2>贡献与证据点数怎么打</h2>
+  <div class="guide-callout"><strong>不要分配固定总点数。</strong><p>三项各自独立。可以同时是 8、8、8，也可以是 2、7、4；高分必须有一句可以说出口的依据。</p></div>
+  <div class="guide-table-wrap"><table class="guide-table"><thead><tr><th>区间</th><th>含义</th><th>适用判断</th></tr></thead><tbody>
+    <tr><td>0–2</td><td>几乎无关或没有证据</td><td>只能凭感觉；即使完成，对目标状态也很难产生可观察变化。</td></tr>
+    <tr><td>3–4</td><td>弱关联、弱证据</td><td>存在间接关系或单一线索，应该先做可逆调查和小样本验证。</td></tr>
+    <tr><td>5–6</td><td>中等</td><td>有明确机制和部分事实支持，但仍有重要假设没有验证。</td></tr>
+    <tr><td>7–8</td><td>强</td><td>能直接说明因果路径，已有重复观察、数据或可靠经验支持。</td></tr>
+    <tr><td>9–10</td><td>决定性</td><td>行动几乎直接解除瓶颈，或证据来自稳定重复、严格验证；不应成为日常默认分。</td></tr>
+  </tbody></table></div>
+  <div class="guide-grid">
+    <article><h3>主要矛盾贡献</h3><p>问：“这件事完成后，目标状态与现实状态之间的主导差距会缩小多少？”只改善局部体验通常不应高于 6。</p></article>
+    <article><h3>瓶颈贡献</h3><p>问：“它是否释放当前最限制整体产出的环节？”绕过瓶颈做更多非瓶颈工作，应打低分。</p></article>
+    <article><h3>证据强度</h3><p>问：“支持这个判断的事实有多可靠？”想法或单次观察约 2–4；可复现数据和多次结果约 7–9。</p></article>
+  </div>
+</section>
+
+<section class="split-grid guide-section">
+  <article class="panel"><p class="eyebrow">资源评分</p><h2>精力、注意力与储备</h2><dl class="detail-list">
+    <div><dt>精力 0–3</dt><dd>只适合低风险、低复杂度动作；4–6 为一般工作状态；7–8 状态良好；9–10 只用于确实少见的高状态。</dd></div>
+    <div><dt>注意力 0–3</dt><dd>频繁被打断或无法持续聚焦；4–6 可完成结构清晰任务；7–8 可处理复杂工作；9–10 需要客观上具备长时间无干扰条件。</dd></div>
+    <div><dt>安全储备</dt><dd>默认 20%。当天不确定性高可用 30%–40%；稳定重复任务可降到 10%–15%，不建议长期设为 0。</dd></div>
+  </dl></article>
+  <article class="panel"><p class="eyebrow">硬边界</p><h2>风险不是靠高收益抵消</h2><p>高风险行动缺少授权、没有恢复路径，或最坏损失不可承受时，系统直接 BLOCKED。贡献和证据再高也不能补偿这些条件。</p><div class="warning-box"><strong>高风险包括</strong><p>生产环境、真实资金、权限变更、敏感数据、不可逆删除，以及会影响其他人的外部动作。</p></div></article>
+</section>
+
+<section class="panel guide-section" id="outcome-scoring">
+  <p class="eyebrow">结果复盘</p><h2>决策质量和执行质量要分开</h2>
+  <div class="guide-table-wrap"><table class="guide-table"><thead><tr><th>分数</th><th>决策过程质量</th><th>执行质量</th></tr></thead><tbody>
+    <tr><td>0–2</td><td>忽略关键事实或越过硬边界</td><td>基本未按约定执行，且没有及时停止</td></tr>
+    <tr><td>3–4</td><td>依据明显不足，关键假设未显性化</td><td>执行中多次偏离，交付物不完整</td></tr>
+    <tr><td>5–6</td><td>过程基本合理，但有可预见遗漏</td><td>完成主要部分，时间、范围或质量有偏差</td></tr>
+    <tr><td>7–8</td><td>基于当时信息做出清晰、可解释选择</td><td>遵守边界并交付，偏差得到及时处理</td></tr>
+    <tr><td>9–10</td><td>关键假设、替代方案和风险均被充分处理</td><td>高质量完成且产生可复用证据或方法</td></tr>
+  </tbody></table></div>
+  <p class="form-help">坏结果不自动等于坏决策，好结果也不自动等于好决策。分别判断计划、执行、环境和模型哪一部分造成偏差。</p>
+</section>
+
+<section class="panel guide-section">
+  <p class="eyebrow">完整示例</p><h2>“为现有项目补一项验收测试”</h2>
+  <div class="guide-grid"><article><h3>输入</h3><p>矛盾贡献 7，瓶颈贡献 8，证据强度 6；精力 6，注意力 7；可用 120 分钟，储备 20%，预计 80 分钟。</p></article><article><h3>解释</h3><p>测试直接覆盖当前发布瓶颈，所以贡献较高；已有失败反馈但样本有限，因此证据不打到 8 以上。</p></article><article><h3>边界</h3><p>停止条件是测试环境连续两次无法复现；明确不做是顺带重构无关模块。若涉及生产数据则先补授权和恢复方案。</p></article></div>
+</section>
+<%- include('partials/foot') %>

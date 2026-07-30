@@ -25,6 +25,12 @@ function option(name: string): string | undefined {
   return index >= 0 ? args[index + 1] : undefined;
 }
 
+function requiredOption(name: string): string {
+  const value = option(name);
+  if (!value) throw new Error(`请使用 ${name} <值> 提供必需参数。`);
+  return value;
+}
+
 async function runtime(required = true): Promise<RuntimeState | null> {
   const state = await getReachableRuntimeState(config.runtimeDir);
   if (!state && required) throw new Error('Praxis Control 尚未运行，请先执行 praxis start。');
@@ -200,6 +206,28 @@ async function main(): Promise<void> {
     console.log(JSON.stringify(await api(await start(), '/api/checkins', { method: 'POST', body: JSON.stringify(await readJsonFile()) }), null, 2));
     return;
   }
+  if (command === 'checkin-get') {
+    const id = encodeURIComponent(requiredOption('--id'));
+    console.log(JSON.stringify(await api(await start(), `/api/checkins/${id}`), null, 2));
+    return;
+  }
+  if (command === 'checkin-status') {
+    const id = encodeURIComponent(requiredOption('--id'));
+    const status = requiredOption('--status');
+    console.log(JSON.stringify(await api(await start(), `/api/checkins/${id}/lifecycle`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
+    }), null, 2));
+    return;
+  }
+  if (command === 'outcome') {
+    const id = encodeURIComponent(requiredOption('--id'));
+    console.log(JSON.stringify(await api(await start(), `/api/checkins/${id}/outcome`, {
+      method: 'POST',
+      body: JSON.stringify(await readJsonFile()),
+    }), null, 2));
+    return;
+  }
   if (command === 'backup') {
     console.log(JSON.stringify(await api(await start(), '/api/system/backup', { method: 'POST', body: '{}' }), null, 2));
     return;
@@ -310,6 +338,11 @@ async function main(): Promise<void> {
   dashboard               输出工作台 JSON
   analyze --file FILE     分析一份 JSON 输入但不保存
   checkin --file FILE     保存一份 JSON 日常决策
+  checkin-get --id ID     获取一份日常决策及可执行状态
+  checkin-status --id ID --status STATUS
+                          推进或取消决策执行状态
+  outcome --id ID --file FILE
+                          记录或修正决策结果复盘
   backup                  创建经过数据库接口导出的本地备份
   audit-verify            校验全部追加式审计链
   export --target FILE    导出可移植 JSON 快照且不覆盖已有文件

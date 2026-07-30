@@ -73,7 +73,7 @@ try {
     $dashboardJson = & $praxis dashboard | Out-String
     if ($LASTEXITCODE -ne 0) { throw 'Packaged dashboard command failed.' }
     $dashboard = $dashboardJson | ConvertFrom-Json
-    if ($dashboard.latestCheckin.analysis_status -ne 'READY' -or $dashboard.awaitingReview -ne 1) {
+    if ($dashboard.latestCheckin.analysis_status -ne 'READY' -or $dashboard.awaitingReview -ne 0) {
         throw 'Packaged dashboard did not contain the saved check-in.'
     }
 

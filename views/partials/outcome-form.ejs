@@ -1,0 +1,16 @@
+<form method="post" action="/checkins/<%= record.id %>/outcome" class="form-stack compact-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label>实际结果<textarea name="actualResult" required><%= outcome?.actual_result ?? '' %></textarea></label>
+  <div class="field-grid two">
+    <label>决策过程质量<input type="number" name="decisionQuality" min="0" max="10" value="<%= outcome?.decision_quality ?? 7 %>" required></label>
+    <label>执行质量<input type="number" name="executionQuality" min="0" max="10" value="<%= outcome?.execution_quality ?? 7 %>" required></label>
+  </div>
+  <p class="form-help">结果分评价过程，不按结果好坏倒推。<a class="text-link" href="/guide#outcome-scoring">查看复盘评分锚点</a></p>
+  <div class="field-grid two">
+    <label>环境影响<select name="environmentImpact"><option value="neutral" <%= !outcome || outcome.environment_impact === 'neutral' ? 'selected' : '' %>>中性</option><option value="helped" <%= outcome?.environment_impact === 'helped' ? 'selected' : '' %>>有利</option><option value="hindered" <%= outcome?.environment_impact === 'hindered' ? 'selected' : '' %>>阻碍</option><option value="unknown" <%= outcome?.environment_impact === 'unknown' ? 'selected' : '' %>>未知</option></select></label>
+    <label>主要偏差来源<select name="varianceSource"><option value="planning" <%= !outcome || outcome.variance_source === 'planning' ? 'selected' : '' %>>计划</option><option value="execution" <%= outcome?.variance_source === 'execution' ? 'selected' : '' %>>执行</option><option value="environment" <%= outcome?.variance_source === 'environment' ? 'selected' : '' %>>环境</option><option value="model" <%= outcome?.variance_source === 'model' ? 'selected' : '' %>>模型</option><option value="mixed" <%= outcome?.variance_source === 'mixed' ? 'selected' : '' %>>混合</option></select></label>
+  </div>
+  <label>验证或否定了什么<textarea name="learning" required><%= outcome?.learning ?? '' %></textarea></label>
+  <label>下一周期如何调整<textarea name="nextAdjustment" required><%= outcome?.next_adjustment ?? '' %></textarea></label>
+  <button class="button primary" type="submit"><%= submitLabel %></button>
+</form>

@@ -49,6 +49,7 @@
             <TextBlock Text="行动设计" Style="{StaticResource SubtitleTextBlockStyle}" />
             <TextBox x:Name="MainAction" Header="唯一主要行动" TextWrapping="Wrap" />
             <TextBox x:Name="Deliverable" Header="本次可验证交付物" TextWrapping="Wrap" />
+            <ComboBox x:Name="LinkedProject" Header="关联项目（可选）" />
             <Grid ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions>
               <NumberBox x:Name="EstimatedMinutes" Header="预计分钟" Value="60" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" />
               <TextBox x:Name="StopCondition" Grid.Column="1" Header="停止/复盘触发条件" TextWrapping="Wrap" />

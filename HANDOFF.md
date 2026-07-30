@@ -35,6 +35,8 @@
 - 关系图谱使用稳定节点和有向关系，专用图数据库不进入 MVP；
 - 高风险外部动作只建议、阻断和留痕，不自动执行。
 - 项目组合 WIP 与状态转换由服务端事务和领域状态机强制执行，客户端提交的组合计数不作为正式事实。
+- 日常决策只可关联活动或维护中的项目，并以 `decision --advances--> project` 关系进入图谱；项目状态校验与决策写入处于同一事务。
+- 决策执行状态由服务端状态机约束；首次结果只能在“待复盘”记录，已闭环结果可修正但必须追加审计，取消后不可补写结果。
 
 ## 当前阶段完成标准
 
@@ -61,4 +63,5 @@
 - Windows x64 已提供免安装自包含便携交付：双击入口会拉起本机服务和原生 GUI，Web/TUI/CLI/安全关闭入口独立可见，事实数据与程序目录分离；包内 Node、PGlite、WinUI 表单和审计链已通过隔离验收，见 `docs/status/2026-07-29-windows-portable.md`；
 - 轻量本机运行时已改为操作系统动态回环端口，CLI/TUI/Windows GUI/Linux GUI 统一从状态文件发现实际地址并携带运行时令牌；启动锁在打开 PGlite 前生效，后台失败写入用户日志并由 CLI 提前报告。Windows 动态端口端到端、便携包和 Gitea Linux 真实 GUI 均已通过，见 `docs/status/2026-07-30-runtime-lifecycle-audit.md`；
 - 第一批业务逻辑已将 WIP 上限、项目状态机和日常分析上下文收回服务端权威边界，并修复周复盘审计聚合 ID；PGlite、浏览器、Windows、Linux 和真实 PostgreSQL 并发准入均已验证，见 `docs/status/2026-07-30-business-logic-foundation.md`；
+- 第二批业务能力已实现项目—决策关联、图谱边、执行生命周期、结果门槛、共享 JSON API、CLI 命令、Windows 原生项目选择器和应用内评分教程；本地共享测试、Windows E2E 与浏览器纵向闭环已通过，Gitea 三作业结果见 `docs/status/2026-07-30-decision-workflow-and-guide.md`；
 - 全量版隔离容器已通过最低权限角色、secret、回环发布、真实写入、审计、备份、独立恢复及 Docker CLI 生命周期验收，见 `docs/status/2026-07-29-full-profile-container.md`；应用原生密码会话和 Nginx HTTPS 模板也已在 NAS 隔离验证，见 `docs/status/2026-07-29-production-access.md`。生产接入仍为 PARTIAL：真实域名/证书未定，现有 PostgreSQL 仍对 LAN/Tailscale 暴露 5432，未确认消费者前不得重建。

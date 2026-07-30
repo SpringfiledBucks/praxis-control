@@ -25,6 +25,9 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.locals.authenticated = config.accessMode === 'local';
   app.locals.formatDate = (value: unknown) => new Date(String(value)).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
   app.locals.json = (value: unknown) => JSON.stringify(value, null, 2);
+  app.locals.lifecycleLabel = (value: string) => ({
+    planned: '已计划', executing: '执行中', awaiting_review: '待复盘', reviewed: '已闭环', cancelled: '已取消',
+  })[value] ?? value;
 
   app.use(helmet());
   app.use(compression());

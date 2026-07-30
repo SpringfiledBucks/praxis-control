@@ -11,6 +11,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
 {
     private PraxisApiClient? _client;
     private CheckinWindow? _checkinWindow;
+    private IReadOnlyList<ProjectSummary> _activeProjects = Array.Empty<ProjectSummary>();
     private bool _isConnected;
     private string _statusText = "正在连接本机服务…";
     private string _activeWip = "—";
@@ -69,7 +70,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
                 _checkinWindow.Activate();
                 return;
             }
-            _checkinWindow = new CheckinWindow(_client, ParseActiveWip(), RefreshAsync);
+            _checkinWindow = new CheckinWindow(_client, ParseActiveWip(), _activeProjects, RefreshAsync);
             _checkinWindow.Closed += (_, _) => _checkinWindow = null;
             _checkinWindow.Activate();
         }
@@ -112,6 +113,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
             var graph = await graphTask;
 
             _client = client;
+            _activeProjects = dashboard.ActiveProjects;
             ActiveWip = $"{dashboard.ActiveWip} / {dashboard.WipLimit}";
             AwaitingReview = dashboard.AwaitingReview.ToString();
             ReviewedLast7Days = dashboard.ReviewedLast7Days.ToString();
@@ -130,6 +132,7 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
     {
         _client?.Dispose();
         _client = null;
+        _activeProjects = Array.Empty<ProjectSummary>();
         IsConnected = false;
         ActiveWip = AwaitingReview = ReviewedLast7Days = GraphSummary = "—";
         LatestAction = "服务连接后显示最近行动";

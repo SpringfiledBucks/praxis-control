@@ -19,6 +19,9 @@ describe('shared API contract', () => {
       '/api/audit/verify',
       '/api/checkins',
       '/api/checkins/analyze',
+      '/api/checkins/{id}',
+      '/api/checkins/{id}/lifecycle',
+      '/api/checkins/{id}/outcome',
       '/api/dashboard',
       '/api/export',
       '/api/graph',
@@ -58,7 +61,8 @@ describe('shared API contract', () => {
       stageGoal: '稳定核心', mainContradiction: '接口漂移', bottleneck: '缺少合同', mainAction: '固化合同',
       deliverable: '机器可读合同', estimatedMinutes: 45, stopCondition: '合同测试通过', explicitNotDo: '',
       contradictionContribution: 8, bottleneckContribution: 8, evidenceStrength: 8, riskLevel: 'low',
-      hasAuthorization: false, lossTolerable: true, hasRecoveryPlan: false, opensNewCoreProject: false, activeWip: 0, wipLimit: 3,
+      hasAuthorization: false, lossTolerable: true, hasRecoveryPlan: false, opensNewCoreProject: false,
+      projectId: null, activeWip: 0, wipLimit: 3,
     }))).toMatchObject({ status: 'READY' });
   });
 });

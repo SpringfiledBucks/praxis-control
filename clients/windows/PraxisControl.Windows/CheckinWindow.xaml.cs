@@ -13,12 +13,22 @@ public sealed partial class CheckinWindow : Window
     private readonly Func<Task> _onSaved;
     private string? _analyzedInput;
 
-    internal CheckinWindow(PraxisApiClient client, int activeWip, Func<Task> onSaved)
+    internal CheckinWindow(
+        PraxisApiClient client,
+        int activeWip,
+        IReadOnlyList<ProjectSummary> activeProjects,
+        Func<Task> onSaved)
     {
         _client = client;
         _activeWip = activeWip;
         _onSaved = onSaved;
         InitializeComponent();
+        LinkedProject.Items.Add(new ComboBoxItem { Content = "不关联项目", Tag = null });
+        foreach (var project in activeProjects)
+        {
+            LinkedProject.Items.Add(new ComboBoxItem { Content = project.Title, Tag = project.Id });
+        }
+        LinkedProject.SelectedIndex = 0;
         AppWindow.Resize(new global::Windows.Graphics.SizeInt32(1000, 820));
         CheckinDate.Date = DateTimeOffset.Now;
         if (Environment.GetEnvironmentVariable("PRAXIS_WINDOWS_E2E_AUTOSUBMIT") == "1")
@@ -146,6 +156,7 @@ public sealed partial class CheckinWindow : Window
     private DailyInput ReadInput()
     {
         var selectedRisk = (RiskLevel.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "low";
+        var projectId = (LinkedProject.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         var date = CheckinDate.Date ?? DateTimeOffset.Now;
         return new DailyInput(
             date.ToString("yyyy-MM-dd"),
@@ -169,6 +180,7 @@ public sealed partial class CheckinWindow : Window
             LossTolerable.IsChecked == true,
             HasRecoveryPlan.IsChecked == true,
             OpensNewCoreProject.IsChecked == true,
+            projectId,
             _activeWip);
     }
 

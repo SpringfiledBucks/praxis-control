@@ -75,6 +75,29 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/checkins/{id}': {
+      get: {
+        summary: '读取一条决策及其结果', operationId: 'getCheckin',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { '200': { description: '决策详情与结果' }, '404': errorResponse, '500': errorResponse },
+      },
+    },
+    '/api/checkins/{id}/lifecycle': {
+      post: {
+        summary: '推进决策执行状态', operationId: 'changeCheckinLifecycle', security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', additionalProperties: false, required: ['status'], properties: { status: { enum: ['executing', 'awaiting_review', 'cancelled'] } } } } } },
+        responses: { '200': { description: '状态已更新' }, '400': errorResponse, '403': errorResponse, '404': errorResponse, '409': errorResponse, '500': errorResponse },
+      },
+    },
+    '/api/checkins/{id}/outcome': {
+      post: {
+        summary: '记录结果并闭环决策', operationId: 'recordCheckinOutcome', security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/OutcomeInput' } } } },
+        responses: { '200': { description: '结果已记录' }, '400': errorResponse, '403': errorResponse, '404': errorResponse, '409': errorResponse, '500': errorResponse },
+      },
+    },
     '/api/graph': {
       get: {
         summary: '读取关系图谱',
@@ -221,6 +244,7 @@ export const openApiDocument = {
           lossTolerable: { type: 'boolean', default: true },
           hasRecoveryPlan: { type: 'boolean', default: false },
           opensNewCoreProject: { type: 'boolean', default: false },
+          projectId: { type: ['string', 'null'], format: 'uuid', default: null, description: '关联的活动或维护中项目。' },
           activeWip: { type: 'integer', minimum: 0, maximum: 99, default: 0, description: '客户端显示上下文；服务端分析时以事实库重新计算。' },
           wipLimit: { type: 'integer', minimum: 1, maximum: 99, default: 3, description: '客户端显示上下文；服务端分析时以当前规则版本覆盖。' },
         },
@@ -242,6 +266,19 @@ export const openApiDocument = {
           triggeredRules: { type: 'array', items: { type: 'string' } },
           assumptions: { type: 'array', items: { type: 'string' } },
           nextReviewTrigger: { type: 'string' },
+        },
+      },
+      OutcomeInput: {
+        type: 'object', additionalProperties: false,
+        required: ['actualResult', 'decisionQuality', 'executionQuality', 'environmentImpact', 'varianceSource', 'learning', 'nextAdjustment'],
+        properties: {
+          actualResult: { type: 'string', minLength: 2, maxLength: 2000 },
+          decisionQuality: { type: 'integer', minimum: 0, maximum: 10 },
+          executionQuality: { type: 'integer', minimum: 0, maximum: 10 },
+          environmentImpact: { enum: ['helped', 'neutral', 'hindered', 'unknown'] },
+          varianceSource: { enum: ['planning', 'execution', 'environment', 'model', 'mixed'] },
+          learning: { type: 'string', minLength: 2, maxLength: 2000 },
+          nextAdjustment: { type: 'string', minLength: 2, maxLength: 2000 },
         },
       },
       Graph: {

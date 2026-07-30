@@ -20,7 +20,7 @@ export async function loadDashboard(database: Database, rulesetVersion: string):
                 FROM decision.daily_checkins WHERE lifecycle_status <> 'cancelled'
                 ORDER BY checkin_date DESC, created_at DESC LIMIT 1`),
     database.query<{ awaiting_review: number; reviewed_last_7_days: number }>(`SELECT
-      count(*) FILTER (WHERE lifecycle_status <> 'reviewed' AND lifecycle_status <> 'cancelled')::int AS awaiting_review,
+      count(*) FILTER (WHERE lifecycle_status = 'awaiting_review')::int AS awaiting_review,
       count(*) FILTER (WHERE lifecycle_status = 'reviewed' AND checkin_date >= current_date - 6)::int AS reviewed_last_7_days
       FROM decision.daily_checkins`),
     loadPortfolioContext(database, rulesetVersion),

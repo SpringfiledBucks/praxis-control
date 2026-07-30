@@ -28,6 +28,7 @@ export function parseDailyBody(body: Request['body']): DailyInput {
     lossTolerable: checked(body.lossTolerable),
     hasRecoveryPlan: checked(body.hasRecoveryPlan),
     opensNewCoreProject: checked(body.opensNewCoreProject),
+    projectId: body.projectId,
     activeWip: body.activeWip ?? 0,
     wipLimit: body.wipLimit ?? 3,
   });

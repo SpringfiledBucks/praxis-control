@@ -24,6 +24,7 @@ function baseInput(overrides: Partial<DailyInput> = {}): DailyInput {
     lossTolerable: true,
     hasRecoveryPlan: false,
     opensNewCoreProject: false,
+    projectId: null,
     activeWip: 1,
     wipLimit: 3,
     ...overrides,

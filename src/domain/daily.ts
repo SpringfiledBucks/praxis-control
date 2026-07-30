@@ -22,6 +22,7 @@ export const dailyInputSchema = z.object({
   lossTolerable: z.boolean().default(true),
   hasRecoveryPlan: z.boolean().default(false),
   opensNewCoreProject: z.boolean().default(false),
+  projectId: z.preprocess((value) => value === '' || value === undefined ? null : value, z.uuid().nullable()).default(null),
   activeWip: z.coerce.number().int().min(0).max(99).default(0),
   wipLimit: z.coerce.number().int().min(1).max(99).default(3),
 });

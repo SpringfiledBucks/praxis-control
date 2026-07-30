@@ -67,7 +67,7 @@ describe('PGlite lightweight profile', () => {
       targetDirectory: restoreTarget,
       sourceDataDirectory: config.pgliteDataDir,
     });
-    expect(restored.migrations).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads']);
+    expect(restored.migrations).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads', '004_decision_project_lifecycle']);
     expect(restored.projects).toBeGreaterThan(0);
     await expect(restorePGliteBackup({
       backupFile: backup!,
@@ -150,6 +150,94 @@ describe('PGlite lightweight profile', () => {
         expect(snapshot.counts.dailyCheckins).toBeGreaterThan(0);
         expect(snapshot.counts.auditEvents).toBeGreaterThan(0);
       });
+  });
+
+  it('links decisions to active projects and enforces the execution-review lifecycle', async () => {
+    const app = createApp(database, config, {
+      csrfToken: 'lifecycle-csrf-token',
+      apiToken: 'lifecycle-api-token-lifecycle-api-token',
+      shutdownToken: 'lifecycle-shutdown-token',
+      requestShutdown: () => undefined,
+    });
+    const authorization = 'Bearer lifecycle-api-token-lifecycle-api-token';
+    const fixture = JSON.parse(await readFile(path.join(process.cwd(), 'src', 'infrastructure', 'test-fixtures', 'daily-input.json'), 'utf8'));
+    const active = await database.query<{ id: string; title: string }>(
+      "SELECT id, title FROM core.projects WHERE status IN ('active', 'maintaining') ORDER BY created_at LIMIT 1",
+    );
+    const project = active.rows[0]!;
+
+    const created = await request(app)
+      .post('/api/checkins')
+      .set('authorization', authorization)
+      .send({ ...fixture, checkinDate: '2026-07-29', mainAction: '完成关联项目的执行闭环', projectId: project.id })
+      .expect(201);
+    const id = created.body.id as string;
+
+    await request(app).get(`/api/checkins/${id}`).expect(200).expect((response) => {
+      expect(response.body.record).toMatchObject({
+        id, projectId: project.id, projectTitle: project.title, lifecycleStatus: 'planned',
+        allowedLifecycleStatuses: ['executing', 'cancelled'],
+      });
+      expect(response.body.outcome).toBeNull();
+    });
+    const relation = await database.query<{ relation_type: string; target_id: string }>(
+      'SELECT relation_type, target_id FROM core.relations WHERE source_id = $1',
+      [id],
+    );
+    expect(relation.rows).toContainEqual({ relation_type: 'advances', target_id: project.id });
+
+    const outcome = {
+      actualResult: '完成了关联、状态推进和结果记录', decisionQuality: 8, executionQuality: 7,
+      environmentImpact: 'neutral', varianceSource: 'execution',
+      learning: '状态门槛能区分计划与已执行事实', nextAdjustment: '在周复盘中聚合项目结果',
+    };
+    await request(app).post(`/api/checkins/${id}/outcome`).set('authorization', authorization).send(outcome).expect(409);
+    await request(app).post(`/api/checkins/${id}/lifecycle`).set('authorization', authorization).send({ status: 'reviewed' }).expect(400);
+    await request(app).post(`/api/checkins/${id}/lifecycle`).set('authorization', authorization).send({ status: 'executing' }).expect(200);
+    await request(app).post(`/api/checkins/${id}/lifecycle`).set('authorization', authorization).send({ status: 'awaiting_review' }).expect(200);
+    await request(app).get('/api/dashboard').expect(200)
+      .expect((response) => expect(response.body.awaitingReview).toBe(1));
+    await request(app).post(`/api/checkins/${id}/outcome`).set('authorization', authorization).send(outcome).expect(200);
+    await request(app).post(`/api/checkins/${id}/outcome`).set('authorization', authorization)
+      .send({ ...outcome, learning: '修正后的认识仍保留审计事件' }).expect(200);
+    await request(app).get(`/api/checkins/${id}`).expect(200).expect((response) => {
+      expect(response.body.record).toMatchObject({ lifecycleStatus: 'reviewed', allowedLifecycleStatuses: [] });
+      expect(response.body.outcome).toMatchObject({ actual_result: outcome.actualResult, decision_quality: 8 });
+    });
+    await request(app).get(`/checkins/${id}`).expect(200).expect(/修正结果事实/).expect(/保存修正/);
+    await request(app).get('/api/dashboard').expect(200)
+      .expect((response) => expect(response.body.awaitingReview).toBe(0));
+    await request(app).post(`/api/checkins/${id}/lifecycle`).set('authorization', authorization).send({ status: 'executing' }).expect(409);
+
+    const cancelled = await request(app)
+      .post('/api/checkins')
+      .set('authorization', authorization)
+      .send({ ...fixture, checkinDate: '2026-07-30', mainAction: '验证取消后的事实边界', projectId: project.id })
+      .expect(201);
+    await request(app).post(`/api/checkins/${cancelled.body.id}/lifecycle`).set('authorization', authorization)
+      .send({ status: 'cancelled' }).expect(200);
+    await request(app).post(`/api/checkins/${cancelled.body.id}/outcome`).set('authorization', authorization).send(outcome).expect(409);
+    expect((await new CheckinService(database, config.rulesetVersion).listRecent(10))
+      .find((record) => record.id === cancelled.body.id)).toMatchObject({ lifecycleStatus: 'cancelled' });
+
+    const pausedProject = await createProject(database, config.rulesetVersion, {
+      title: '暂停项目关联门槛', kind: 'explore', currentBottleneck: '验证非活动项目不能吸收新决策',
+      exitCondition: '关联请求被服务端拒绝',
+    });
+    await changeProjectStatus(database, config.rulesetVersion, pausedProject, 'paused');
+    const service = new CheckinService(database, config.rulesetVersion);
+    await expect(service.create({ ...fixture, checkinDate: '2026-07-31', projectId: pausedProject }))
+      .rejects.toMatchObject({ code: 'PROJECT_NOT_ACCEPTING_DECISIONS', statusCode: 409 });
+
+    const audit = await database.query<{ event_type: string }>(
+      'SELECT event_type FROM governance.audit_events WHERE aggregate_id = $1 ORDER BY created_at',
+      [id],
+    );
+    expect(audit.rows.map((event) => event.event_type)).toEqual([
+      'CHECKIN_ANALYZED_AND_SAVED', 'CHECKIN_LIFECYCLE_CHANGED', 'CHECKIN_LIFECYCLE_CHANGED',
+      'OUTCOME_RECORDED', 'OUTCOME_CORRECTED',
+    ]);
+    expect(await verifyAuditChain(database)).toMatchObject({ valid: true });
   });
 
   it('enforces authoritative WIP capacity and ignores client-supplied portfolio counts', async () => {

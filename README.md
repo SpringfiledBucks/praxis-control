@@ -21,12 +21,15 @@ Windows 包内置 Node.js 24、生产依赖和自包含 WinUI 3 客户端，不�
 ## 主要能力
 
 - 记录日常现实输入并生成可解释分析；
-- 人工确认后保存决策、执行结果与复盘；
+- 将日常决策关联到活动项目，并按计划、执行、待复盘、闭环状态推进；
+- 人工确认后保存决策、执行结果与复盘，修正结果时保留追加审计；
 - 通过稳定节点和有向关系呈现关系图谱；
 - 提供 Web、CLI 和 TUI 跨平台入口；
 - 提供 Windows WinUI 3 与 Linux GTK4/libadwaita 原生客户端；
 - 支持审计链校验、备份、恢复和便携数据导入导出；
 - 轻量版使用嵌入式 PGlite，全量版可切换 PostgreSQL。
+
+首次使用建议先阅读[使用教程](docs/user-guide.md)。应用内“教程”页面提供两分钟流程、0–10 点数锚点、风险硬门槛、结果评分和完整示例；三个贡献/证据分数彼此独立，不需要凑成固定总分。
 
 ## 启动与关闭
 
@@ -85,6 +88,9 @@ npm run praxis -- start
 npm run praxis -- stop
 npm run praxis -- status
 npm run praxis -- dashboard
+npm run praxis -- checkin-get --id <决策 ID>
+npm run praxis -- checkin-status --id <决策 ID> --status executing
+npm run praxis -- outcome --id <决策 ID> --file docs/examples/outcome-input.json
 npm run praxis -- tui
 npm run praxis -- backup
 npm run praxis -- restore --file <备份文件> --target <不存在的独立目录>

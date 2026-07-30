@@ -12,6 +12,8 @@ import type { Database } from '../infrastructure/db.js';
 import { API_VERSION } from '../contracts/api.js';
 import { openApiDocument } from '../contracts/openapi.js';
 import { projectStatuses } from '../domain/portfolio.js';
+import { decisionLifecycleActionStatuses } from '../domain/decision-lifecycle.js';
+import { outcomeInputSchema } from '../domain/outcome.js';
 
 export type SystemControl = {
   csrfToken: string;
@@ -41,6 +43,7 @@ export function createRouter(database: Database, rulesetVersion: string, system?
         today: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' }),
         activeWip: dashboard.activeWip,
         wipLimit: dashboard.wipLimit,
+        activeProjects: dashboard.activeProjects,
         latest,
       });
     } catch (error) { next(error); }
@@ -58,6 +61,31 @@ export function createRouter(database: Database, rulesetVersion: string, system?
       const id = await checkins.create(parseDailyBody(req.body));
       res.status(201).json({ status: 'created', id });
     } catch (error) { next(error); }
+  });
+
+  router.get('/api/checkins/:id', async (req, res, next) => {
+    try {
+      const record = await checkins.get(z.uuid().parse(req.params.id));
+      if (!record) return res.status(404).json({ status: 'error', message: '日常决策不存在。' });
+      return res.json({ record, outcome: await checkins.getOutcome(record.id) });
+    } catch (error) { return next(error); }
+  });
+
+  router.post('/api/checkins/:id/lifecycle', async (req, res, next) => {
+    try {
+      const id = z.uuid().parse(req.params.id);
+      const status = z.enum(decisionLifecycleActionStatuses).parse(req.body.status);
+      await checkins.changeLifecycle(id, status);
+      return res.json({ status: 'updated', id, lifecycleStatus: status });
+    } catch (error) { return next(error); }
+  });
+
+  router.post('/api/checkins/:id/outcome', async (req, res, next) => {
+    try {
+      const id = z.uuid().parse(req.params.id);
+      await checkins.recordOutcome(id, outcomeInputSchema.parse(req.body));
+      return res.json({ status: 'reviewed', id });
+    } catch (error) { return next(error); }
   });
 
   router.get('/api/dashboard', async (_req, res, next) => {
@@ -116,16 +144,16 @@ export function createRouter(database: Database, rulesetVersion: string, system?
   router.post('/checkins/:id/outcome', async (req, res, next) => {
     try {
       const id = z.uuid().parse(req.params.id);
-      const schema = z.object({
-        actualResult: z.string().trim().min(2).max(2000),
-        decisionQuality: z.coerce.number().int().min(0).max(10),
-        executionQuality: z.coerce.number().int().min(0).max(10),
-        environmentImpact: z.enum(['helped', 'neutral', 'hindered', 'unknown']),
-        varianceSource: z.enum(['planning', 'execution', 'environment', 'model', 'mixed']),
-        learning: z.string().trim().min(2).max(2000),
-        nextAdjustment: z.string().trim().min(2).max(2000),
-      });
-      await checkins.recordOutcome(id, schema.parse(req.body));
+      await checkins.recordOutcome(id, outcomeInputSchema.parse(req.body));
+      res.redirect(`/checkins/${id}`);
+    } catch (error) { next(error); }
+  });
+
+  router.post('/checkins/:id/lifecycle', async (req, res, next) => {
+    try {
+      const id = z.uuid().parse(req.params.id);
+      const status = z.enum(decisionLifecycleActionStatuses).parse(req.body.status);
+      await checkins.changeLifecycle(id, status);
       res.redirect(`/checkins/${id}`);
     } catch (error) { next(error); }
   });
@@ -154,6 +182,10 @@ export function createRouter(database: Database, rulesetVersion: string, system?
     try {
       res.render('projects', { title: '项目组合', portfolio: await loadProjectPortfolio(database, rulesetVersion) });
     } catch (error) { next(error); }
+  });
+
+  router.get('/guide', (_req, res) => {
+    res.render('guide', { title: '使用教程' });
   });
 
   router.post('/projects', async (req, res, next) => {

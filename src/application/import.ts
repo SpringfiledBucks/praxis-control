@@ -53,7 +53,7 @@ const importTables: readonly ImportTable[] = [
       'main_contradiction', 'bottleneck', 'main_action', 'deliverable', 'estimated_minutes', 'stop_condition',
       'explicit_not_do', 'contradiction_contribution', 'bottleneck_contribution', 'evidence_strength',
       'risk_level', 'has_authorization', 'loss_tolerable', 'has_recovery_plan', 'opens_new_core_project',
-      'active_wip', 'analysis_status', 'analysis_snapshot', 'ruleset_version', 'lifecycle_status', 'created_at',
+      'active_wip', 'project_id', 'analysis_status', 'analysis_snapshot', 'ruleset_version', 'lifecycle_status', 'created_at',
     ],
     jsonColumns: ['analysis_snapshot'],
   },

@@ -33,6 +33,7 @@
     <section class="form-section">
       <div class="section-number">03</div>
       <div class="section-content"><h2>一个主要行动</h2>
+        <label>关联项目<select name="projectId"><option value="">不关联项目</option><% activeProjects.forEach((project) => { %><option value="<%= project.id %>"><%= project.title %></option><% }) %></select><small>只有活动或维护中的项目可以接收新决策；关联后会自动进入关系图谱。</small></label>
         <label>今天推进什么<textarea name="mainAction" required placeholder="动作 + 对象"><%= latest?.main_action || '' %></textarea></label>
         <label>最小可交付结果<textarea name="deliverable" required placeholder="外部可观察、可验收的结果"><%= latest?.deliverable || '' %></textarea></label>
         <div class="field-grid two">
@@ -47,7 +48,7 @@
 
     <section class="form-section">
       <div class="section-number">04</div>
-      <div class="section-content"><h2>判断依据</h2><p>用粗粒度评分显性化假设，不追求伪精确。</p>
+      <div class="section-content"><h2>判断依据</h2><p>三个分数彼此独立，不需要凑成固定总分。<a class="text-link" href="/guide#scoring">查看点数分配教程</a></p>
         <div class="field-grid three sliders">
           <label>主要矛盾贡献 <output data-for="contradictionContribution">8</output><input type="range" name="contradictionContribution" min="0" max="10" value="8"></label>
           <label>瓶颈贡献 <output data-for="bottleneckContribution">8</output><input type="range" name="bottleneckContribution" min="0" max="10" value="8"></label>
