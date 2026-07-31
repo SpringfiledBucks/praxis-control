@@ -21,10 +21,10 @@ describe('health probes', () => {
   it('keeps liveness healthy while readiness rejects an unmigrated database', async () => {
     const app = createApp(databaseWithMissingMigrations(), loadConfig({ NODE_ENV: 'test' }));
 
-    await request(app).get('/health/live').expect(200).expect((response) => {
+    await request(app).get('/health/live').expect(200).expect('cache-control', 'no-store').expect((response) => {
       expect(response.body).toMatchObject({ status: 'ok', service: 'live' });
     });
-    await request(app).get('/health/ready').expect(503).expect((response) => {
+    await request(app).get('/health/ready').expect(503).expect('cache-control', 'no-store').expect((response) => {
       expect(response.body).toMatchObject({ status: 'degraded', database: 'connected', migrations: 'outdated' });
     });
     await request(app).get('/health').expect(503);

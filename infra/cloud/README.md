@@ -58,6 +58,34 @@ the complete proxy configuration before reload.
 
 ## Upgrade and rollback
 
+Create a non-overwriting, custom-format database dump before an upgrade:
+
+```sh
+sh backup.sh /secure/backup/praxis-control
+```
+
+The script requires the database service to be running, writes through a
+private partial file, refuses replacement, and verifies the archive with
+`pg_restore --list` before publishing the final filename. Copy backups off the
+host and periodically restore them into an isolated database; archive parsing
+alone is not a restore rehearsal.
+
+For Nginx on the same host, render a new include file without overwriting any
+existing configuration:
+
+```sh
+PRAXIS_SERVER_NAME=praxis.example.net \
+PRAXIS_CERTIFICATE=/etc/letsencrypt/live/praxis.example.net/fullchain.pem \
+PRAXIS_CERTIFICATE_KEY=/etc/letsencrypt/live/praxis.example.net/privkey.pem \
+sh render-nginx.sh /tmp/praxis-control.conf
+```
+
+Run `nginx -t` against the complete host configuration before installing the
+file or reloading Nginx. The template terminates TLS, forwards only to the
+loopback application port, replaces forwarding headers, and strips inbound
+identity and bearer-token headers. Certificate issuance and renewal remain the
+operator's responsibility.
+
 Back up and restore-test the database first. Set the new digest-pinned
 `PRAXIS_APP_IMAGE`, pull/build it, and run `docker compose up -d`. Compose runs
 the one-shot migration before replacing service readiness. Database migrations

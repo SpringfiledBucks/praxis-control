@@ -280,10 +280,12 @@ export function createRouter(database: Database, rulesetVersion: string, system?
   });
 
   router.get('/health/live', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
     res.json({ status: 'ok', service: 'live', rulesetVersion });
   });
 
   const readinessHandler: RequestHandler = async (_req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
       await database.query('SELECT 1');
     } catch {

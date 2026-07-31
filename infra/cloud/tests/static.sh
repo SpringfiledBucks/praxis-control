@@ -5,6 +5,8 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cloud_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
 compose_file="$cloud_dir/compose.yml"
 dockerfile="$cloud_dir/Dockerfile"
+backup_script="$cloud_dir/backup.sh"
+nginx_template="$cloud_dir/nginx/praxis-control.conf.template"
 
 require_text() {
   grep -F -- "$2" "$1" >/dev/null || {
@@ -35,6 +37,13 @@ require_text "$compose_file" 'no-new-privileges:true'
 require_text "$compose_file" 'cap_drop:'
 require_text "$compose_file" 'read_only: true'
 require_text "$dockerfile" 'USER node'
+require_text "$backup_script" 'pg_dump -h 127.0.0.1 -U praxis_control -d praxis_control -Fc --no-owner --no-privileges'
+require_text "$backup_script" 'pg_restore --list'
+require_text "$backup_script" 'refusing to overwrite'
+require_text "$nginx_template" 'proxy_pass http://127.0.0.1:@@UPSTREAM_PORT@@;'
+require_text "$nginx_template" 'proxy_set_header X-Forwarded-For $remote_addr;'
+require_text "$nginx_template" 'proxy_set_header Tailscale-User-Login "";'
+require_text "$nginx_template" 'proxy_set_header Authorization "";'
 reject_text "$compose_file" 'privileged: true'
 reject_text "$compose_file" '0.0.0.0:${PRAXIS_BIND_PORT'
 
