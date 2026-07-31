@@ -1,6 +1,6 @@
 # 周复盘统计来源与人工调整
 
-状态：PARTIAL（本地共享合同已验证；真实 PostgreSQL 与 Gitea CI 待本提交验证）
+状态：VERIFIED
 
 日期：2026-07-31
 
@@ -25,8 +25,9 @@
 - Web GET 实际渲染“系统决策记录”和“可审计调整”；Web POST 使用新的报告字段完成保存和审计；
 - `git diff --check` 在提交前复核。
 
-## 剩余门槛
+## Gitea 与真实 PostgreSQL
 
-- Gitea `verify`、`linux-gui-smoke` 和 `postgres-contract` 必须全部成功；
-- 真实 PostgreSQL 必须确认 005 迁移、JSONB 快照、便携导入和审计链合同；
-- 未完成上述门槛前不把本批提升为 VERIFIED，也不进入正式云端部署。
+- Gitea run 91 对应提交 `da12ab4f0f2a`；
+- `verify`、`linux-gui-smoke` 和 `postgres-contract` 全部成功；
+- 真实 PostgreSQL 已确认 005 迁移、JSONB 三层快照、便携导入和审计链合同；
+- 本批验收门槛全部满足，提升为 VERIFIED，可以进入标准服务端与 Web 部署批次。

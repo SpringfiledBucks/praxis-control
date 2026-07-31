@@ -74,4 +74,5 @@
 - 轻量本机运行时已改为操作系统动态回环端口，CLI/TUI/Windows GUI/Linux GUI 统一从状态文件发现实际地址并携带运行时令牌；启动锁在打开 PGlite 前生效，后台失败写入用户日志并由 CLI 提前报告。Windows 动态端口端到端、便携包和 Gitea Linux 真实 GUI 均已通过，见 `docs/status/2026-07-30-runtime-lifecycle-audit.md`；
 - 第一批业务逻辑已将 WIP 上限、项目状态机和日常分析上下文收回服务端权威边界，并修复周复盘审计聚合 ID；PGlite、浏览器、Windows、Linux 和真实 PostgreSQL 并发准入均已验证，见 `docs/status/2026-07-30-business-logic-foundation.md`；
 - 第二批业务能力已实现项目—决策关联、图谱边、执行生命周期、结果门槛、共享 JSON API、CLI 命令、Windows 原生项目选择器和应用内评分教程；本地共享测试、Windows E2E 与浏览器纵向闭环已通过，Gitea 三作业结果见 `docs/status/2026-07-30-decision-workflow-and-guide.md`；
+- 周复盘事实整改已使用明确自然周、服务端保存前重算和“系统原值—人工调整—最终报告值”三层来源，005 迁移与便携链已通过 PGlite 和真实 PostgreSQL；Gitea run 91 三个作业全部成功，见 `docs/status/2026-07-31-weekly-review-provenance.md`；
 - 全量版隔离容器已通过最低权限角色、secret、回环发布、真实写入、审计、备份、独立恢复及 Docker CLI 生命周期验收，见 `docs/status/2026-07-29-full-profile-container.md`；应用原生密码会话和 Nginx HTTPS 模板也已在 NAS 隔离验证，见 `docs/status/2026-07-29-production-access.md`。生产接入仍为 PARTIAL：真实域名/证书未定，现有 PostgreSQL 仍对 LAN/Tailscale 暴露 5432，未确认消费者前不得重建。
