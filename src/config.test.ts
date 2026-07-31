@@ -18,7 +18,12 @@ describe('loadConfig', () => {
     expect(path.basename(config.pgliteDataDir)).toBe('pglite');
     expect(config.databaseSsl).toBe(false);
     expect(config.accessMode).toBe('local');
+    expect(config.aiMode).toBe('disabled');
     expect(config.logDir).toBe(path.join(config.dataDir, 'logs'));
+  });
+
+  it('fails closed when an unimplemented model gateway is requested', () => {
+    expect(() => loadConfig({ AI_MODE: 'http' })).toThrow();
   });
 
   it('honors an explicit fixed port and rejects automatic ports for remote profiles', () => {

@@ -53,6 +53,7 @@ describe('shared API contract', () => {
         backup: true,
         safeShutdown: true,
         widgetSummary: true,
+        llmAdvisory: false,
       },
     }).apiVersion).toBe(API_VERSION);
 

@@ -25,6 +25,7 @@ const envSchema = z.object({
   SESSION_SECRET_FILE: z.string().min(1).optional(),
   SESSION_COOKIE_SECURE: z.enum(['true', 'false']).default('true'),
   RUN_MIGRATIONS: z.enum(['true', 'false']).default('true'),
+  AI_MODE: z.literal('disabled').default('disabled'),
   RULESET_VERSION: z.string().default('2026.07.28-mvp1'),
 });
 
@@ -46,6 +47,7 @@ export type AppConfig = {
   sessionSecret?: string;
   sessionCookieSecure: boolean;
   runMigrations: boolean;
+  aiMode: 'disabled';
   rulesetVersion: string;
 };
 
@@ -117,6 +119,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     ...(sessionSecret ? { sessionSecret } : {}),
     sessionCookieSecure: env.SESSION_COOKIE_SECURE === 'true',
     runMigrations: env.RUN_MIGRATIONS === 'true',
+    aiMode: env.AI_MODE,
     rulesetVersion: env.RULESET_VERSION,
   };
 }

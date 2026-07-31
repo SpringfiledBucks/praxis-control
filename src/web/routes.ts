@@ -112,6 +112,7 @@ export function createRouter(database: Database, rulesetVersion: string, system?
         backup: Boolean(system?.requestBackup),
         safeShutdown: Boolean(system),
         widgetSummary: true,
+        llmAdvisory: false,
       },
     });
   });

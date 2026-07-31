@@ -115,6 +115,7 @@ describe('PGlite lightweight profile', () => {
       expect(meta.apiVersion).toBe(API_VERSION);
       expect(meta.capabilities.portableExport).toBe(true);
       expect(meta.capabilities.widgetSummary).toBe(true);
+      expect(meta.capabilities.llmAdvisory).toBe(false);
     });
     await request(app).get('/api/widgets/summary').expect(200).expect('cache-control', 'private, no-store').expect((response) => {
       const summary = widgetSummaryResponseSchema.parse(response.body);

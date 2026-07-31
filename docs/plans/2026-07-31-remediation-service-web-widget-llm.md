@@ -191,7 +191,7 @@ Web/API 请求
 - 单节点标准云部署、HTTPS、secret、备份恢复和升级回滚；
 - Web PWA 基线和小组件摘要 API。
 
-进度（2026-07-31）：OCI Dockerfile、独立迁移任务、单节点 Compose、安全容器边界和迁移感知的双探针已实现并通过权威 CI；真实 OCI 构建、HTTPS、digest 固定和备份恢复演练仍未完成。
+进度（2026-08-01）：OCI Dockerfile、独立迁移任务、单节点 Compose、安全容器边界、迁移感知双探针、Gitea OCI 发布、digest 隔离部署和备份恢复演练已完成。生产发布门禁会拒绝可变镜像、未加载或不匹配的 digest、非本 Compose 应用占用的入口端口和对外发布数据库端口；真实域名 HTTPS 上线仍待独立执行。
 
 后续进度：代码基线与备份/代理静态契约已分别通过 Gitea run 93、94；PWA 安装清单、不缓存业务数据的离线外壳、受认证保护的最小小组件摘要 API 与 Adaptive Card 候选模板已实现。Windows `widgets` 清单注册继续等待公开 HTTPS 和真机验收。
 

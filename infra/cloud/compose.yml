@@ -51,6 +51,7 @@ services:
       SESSION_SECRET_FILE: /run/secrets/praxis_session_secret
       SESSION_COOKIE_SECURE: "true"
       RUN_MIGRATIONS: "true"
+      AI_MODE: ${AI_MODE:-disabled}
       RULESET_VERSION: ${RULESET_VERSION:-2026.07.28-mvp1}
     secrets: &application-secrets
       - praxis_db_password

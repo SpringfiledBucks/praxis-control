@@ -227,8 +227,8 @@ export const openApiDocument = {
           backend: { enum: ['pglite', 'postgres'] },
           capabilities: {
             type: 'object', additionalProperties: false,
-            required: ['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown', 'widgetSummary'],
-            properties: Object.fromEntries(['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown', 'widgetSummary'].map((name) => [name, { type: 'boolean' }])),
+            required: ['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown', 'widgetSummary', 'llmAdvisory'],
+            properties: Object.fromEntries(['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown', 'widgetSummary', 'llmAdvisory'].map((name) => [name, { type: 'boolean' }])),
           },
         },
       },

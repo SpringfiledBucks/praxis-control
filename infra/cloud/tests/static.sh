@@ -7,6 +7,7 @@ compose_file="$cloud_dir/compose.yml"
 dockerfile="$cloud_dir/Dockerfile"
 backup_script="$cloud_dir/backup.sh"
 preflight_script="$cloud_dir/preflight.sh"
+release_preflight_script="$cloud_dir/release-preflight.sh"
 readme="$cloud_dir/README.md"
 nginx_template="$cloud_dir/nginx/praxis-control.conf.template"
 
@@ -33,6 +34,7 @@ printf '%s\n' "$database_block" | grep -Eq '^    ports:' && {
 require_text "$compose_file" 'condition: service_completed_successfully'
 require_text "$compose_file" 'command: ["node", "dist/cli/migrate.js"]'
 require_text "$compose_file" 'RUN_MIGRATIONS: "false"'
+require_text "$compose_file" 'AI_MODE: ${AI_MODE:-disabled}'
 require_text "$compose_file" '127.0.0.1:${PRAXIS_BIND_PORT:-4310}:4310'
 require_text "$compose_file" "fetch('http://127.0.0.1:4310/health/ready')"
 require_text "$compose_file" 'no-new-privileges:true'
@@ -47,6 +49,9 @@ require_text "$backup_script" 'pg_restore --list'
 require_text "$backup_script" 'refusing to overwrite'
 require_text "$preflight_script" 'file-backed Compose secret must have mode 0444'
 require_text "$preflight_script" 'secret directory must have mode 0700'
+require_text "$release_preflight_script" 'repository@sha256 digest reference'
+require_text "$release_preflight_script" 'outside this Compose application'
+require_text "$release_preflight_script" 'current database container publishes a host port'
 require_text "$readme" 'chmod 0444 secrets/*.txt'
 require_text "$nginx_template" 'proxy_pass http://127.0.0.1:@@UPSTREAM_PORT@@;'
 require_text "$nginx_template" 'proxy_set_header X-Forwarded-For $remote_addr;'

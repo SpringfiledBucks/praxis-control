@@ -24,7 +24,11 @@ export const advisoryRequestSchema = z.object({
   recordIds: z.array(z.uuid()).max(20),
   userInstruction: z.string().trim().max(2000).optional(),
   locale: z.literal('zh-CN').default('zh-CN'),
-}).strict();
+}).strict().superRefine((request, context) => {
+  if (new Set(request.recordIds).size !== request.recordIds.length) {
+    context.addIssue({ code: 'custom', path: ['recordIds'], message: 'recordIds must be unique' });
+  }
+});
 
 export const advisorySuggestionSchema = z.object({
   targetField: z.enum(advisoryTargetFields),

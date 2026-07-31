@@ -12,6 +12,7 @@ export const apiCapabilitiesSchema = z.object({
   backup: z.boolean(),
   safeShutdown: z.boolean(),
   widgetSummary: z.boolean(),
+  llmAdvisory: z.boolean(),
 });
 
 export const metaResponseSchema = z.object({

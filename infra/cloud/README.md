@@ -52,6 +52,16 @@ The authoritative Gitea workflow publishes the application image after all
 quality jobs pass; use the digest from that workflow rather than rebuilding on
 the deployment host.
 
+For a production promotion, load the two tested images on the deployment host,
+set both digest references in `.env`, and run the release gate. It refuses
+mutable tags, missing or mismatched local digests, a loopback port owned outside
+this Compose application, and any published host port on an existing database
+container.
+
+```sh
+sh release-preflight.sh
+```
+
 ## Start and verify
 
 ```sh
@@ -102,12 +112,20 @@ first controlled rollout. Raise it to at most `31536000` only after certificate
 renewal, monitoring, and proxy rollback have been exercised; a long HSTS value
 can make a broken TLS deployment persist in clients after server rollback.
 
-Back up and restore-test the database first. Set the new digest-pinned
-`PRAXIS_APP_IMAGE`, pull/build it, and run `docker compose up -d`. Compose runs
-the one-shot migration before replacing service readiness. Database migrations
-are forward-only; an application image rollback is safe only when its documented
-schema compatibility includes the newly applied migration. Otherwise restore a
-verified database backup in an isolated recovery procedure.
+Back up and restore-test the database first. Set the new digest-pinned image
+references, load those exact images on the host, rerun `release-preflight.sh`,
+and promote without a build or pull:
+
+```sh
+docker compose --env-file .env up -d --no-build --pull never
+```
+
+Compose runs the one-shot migration before replacing service readiness.
+Database migrations are forward-only; an application image rollback is safe
+only when its documented schema compatibility includes the newly applied
+migration. Otherwise restore a verified database backup in an isolated recovery
+procedure. The release gate does not claim to provide automatic database
+rollback.
 
 Stopping the stack preserves the named database volume:
 
