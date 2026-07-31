@@ -1,0 +1,38 @@
+{
+  "id": "/",
+  "name": "Praxis Control 实践控制台",
+  "short_name": "Praxis Control",
+  "description": "淡雅、可审计的个人实践与决策工具。",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f0e8",
+  "theme_color": "#13251d",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/static/icons/praxis-control.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "今日工作台",
+      "short_name": "今日",
+      "url": "/"
+    },
+    {
+      "name": "记录今日决策",
+      "short_name": "新决策",
+      "url": "/checkins/new"
+    },
+    {
+      "name": "待复盘记录",
+      "short_name": "复盘",
+      "url": "/history"
+    }
+  ]
+}

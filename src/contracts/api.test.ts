@@ -8,6 +8,7 @@ import {
   graphResponseSchema,
   metaResponseSchema,
   portableExportResponseSchema,
+  widgetSummaryResponseSchema,
 } from './api.js';
 import { openApiDocument } from './openapi.js';
 
@@ -30,6 +31,7 @@ describe('shared API contract', () => {
       '/api/system/backup',
       '/api/system/runtime',
       '/api/system/shutdown',
+      '/api/widgets/summary',
       '/health',
       '/health/live',
       '/health/ready',
@@ -50,6 +52,7 @@ describe('shared API contract', () => {
         portableExport: true,
         backup: true,
         safeShutdown: true,
+        widgetSummary: true,
       },
     }).apiVersion).toBe(API_VERSION);
 
@@ -57,6 +60,11 @@ describe('shared API contract', () => {
     expect(graphResponseSchema.parse({ nodes: [], edges: [] })).toBeTruthy();
     expect(auditVerificationResponseSchema.parse({ valid: true, totalEvents: 0, aggregateCount: 0, failures: [] })).toBeTruthy();
     expect(portableExportResponseSchema.parse({ format: 'praxis-control-portable-json', formatVersion: 1, exportedAt: new Date().toISOString(), rulesetVersion: 'test', backend: 'pglite', data: {}, counts: {} })).toBeTruthy();
+    expect(widgetSummaryResponseSchema.parse({
+      generatedAt: new Date().toISOString(), today: '2026-07-31', hasTodayPlan: false, mainAction: null,
+      capacityText: '尚未填写今日可支配时间', awaitingReview: 0, reviewText: '待复盘 0 项',
+      activeWip: 0, wipLimit: 3, wipText: '核心 WIP 0 / 3', serviceStatus: 'ready',
+    })).toBeTruthy();
 
     expect(dailyAnalysisResponseSchema.parse(analyzeDaily({
       checkinDate: '2026-07-28', availableMinutes: 60, reservePercent: 20, energy: 8, attention: 8,

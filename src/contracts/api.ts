@@ -11,6 +11,7 @@ export const apiCapabilitiesSchema = z.object({
   portableExport: z.boolean(),
   backup: z.boolean(),
   safeShutdown: z.boolean(),
+  widgetSummary: z.boolean(),
 });
 
 export const metaResponseSchema = z.object({
@@ -108,6 +109,20 @@ export const livenessResponseSchema = z.object({
   rulesetVersion: z.string().min(1),
 });
 
+export const widgetSummaryResponseSchema = z.object({
+  generatedAt: z.iso.datetime(),
+  today: z.iso.date(),
+  hasTodayPlan: z.boolean(),
+  mainAction: z.string().nullable(),
+  capacityText: z.string().min(1),
+  awaitingReview: z.number().int().nonnegative(),
+  reviewText: z.string().min(1),
+  activeWip: z.number().int().nonnegative(),
+  wipLimit: z.number().int().positive(),
+  wipText: z.string().min(1),
+  serviceStatus: z.literal('ready'),
+});
+
 export const errorResponseSchema = z.object({
   status: z.literal('error'),
   message: z.string().min(1),
@@ -119,3 +134,4 @@ export type DailyAnalysisResponse = z.infer<typeof dailyAnalysisResponseSchema>;
 export type GraphResponse = z.infer<typeof graphResponseSchema>;
 export type AuditVerificationResponse = z.infer<typeof auditVerificationResponseSchema>;
 export type PortableExportResponse = z.infer<typeof portableExportResponseSchema>;
+export type WidgetSummaryResponse = z.infer<typeof widgetSummaryResponseSchema>;

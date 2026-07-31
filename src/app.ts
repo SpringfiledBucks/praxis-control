@@ -33,6 +33,11 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.use(compression());
   app.use(express.urlencoded({ extended: true, limit: '256kb' }));
   app.use(express.json({ limit: '256kb' }));
+  app.get('/sw.js', (_req, res) => {
+    res.set('Cache-Control', 'no-cache');
+    res.set('Service-Worker-Allowed', '/');
+    return res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
+  });
   if (config.accessMode === 'password') app.set('trust proxy', 1);
   const passwordAccess = config.accessMode === 'password'
     ? new PasswordAccess(config.accessPassword!, config.sessionSecret!, config.sessionCookieSecure)

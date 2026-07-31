@@ -4,6 +4,7 @@ import { CheckinService } from '../application/checkins.js';
 import { loadDashboard } from '../application/dashboard.js';
 import { changeProjectStatus, createProject, loadProjectPortfolio } from '../application/projects.js';
 import { loadWeeklySummary, saveWeeklyReview } from '../application/reviews.js';
+import { loadWidgetSummary } from '../application/widget-summary.js';
 import { loadKnowledgeGraph } from '../application/graph.js';
 import { createPortableExport } from '../application/export.js';
 import { verifyAuditChain } from '../infrastructure/audit.js';
@@ -110,8 +111,17 @@ export function createRouter(database: Database, rulesetVersion: string, system?
         portableExport: true,
         backup: Boolean(system?.requestBackup),
         safeShutdown: Boolean(system),
+        widgetSummary: true,
       },
     });
+  });
+
+  router.get('/api/widgets/summary', async (_req, res, next) => {
+    try {
+      res.set('Cache-Control', 'private, no-store');
+      res.set('Vary', 'Cookie');
+      return res.json(await loadWidgetSummary(database, rulesetVersion));
+    } catch (error) { return next(error); }
   });
 
   router.get('/api/system/runtime', (req, res) => {

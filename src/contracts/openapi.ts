@@ -46,6 +46,16 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/widgets/summary': {
+      get: {
+        summary: '读取小组件所需的最小今日摘要',
+        operationId: 'getWidgetSummary',
+        responses: {
+          '200': { description: '只读小组件摘要', content: { 'application/json': { schema: { $ref: '#/components/schemas/WidgetSummary' } } } },
+          '401': errorResponse,
+        },
+      },
+    },
     '/api/checkins/analyze': {
       post: {
         summary: '分析日常决策但不保存',
@@ -217,8 +227,8 @@ export const openApiDocument = {
           backend: { enum: ['pglite', 'postgres'] },
           capabilities: {
             type: 'object', additionalProperties: false,
-            required: ['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown'],
-            properties: Object.fromEntries(['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown'].map((name) => [name, { type: 'boolean' }])),
+            required: ['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown', 'widgetSummary'],
+            properties: Object.fromEntries(['dashboard', 'checkins', 'projects', 'graph', 'auditVerification', 'portableExport', 'backup', 'safeShutdown', 'widgetSummary'].map((name) => [name, { type: 'boolean' }])),
           },
         },
       },
@@ -327,6 +337,17 @@ export const openApiDocument = {
       Liveness: {
         type: 'object', required: ['status', 'service', 'rulesetVersion'], additionalProperties: false,
         properties: { status: { const: 'ok' }, service: { const: 'live' }, rulesetVersion: { type: 'string' } },
+      },
+      WidgetSummary: {
+        type: 'object',
+        required: ['generatedAt', 'today', 'hasTodayPlan', 'mainAction', 'capacityText', 'awaitingReview', 'reviewText', 'activeWip', 'wipLimit', 'wipText', 'serviceStatus'],
+        additionalProperties: false,
+        properties: {
+          generatedAt: { type: 'string', format: 'date-time' }, today: { type: 'string', format: 'date' }, hasTodayPlan: { type: 'boolean' },
+          mainAction: { type: ['string', 'null'] }, capacityText: { type: 'string' }, awaitingReview: { type: 'integer', minimum: 0 },
+          reviewText: { type: 'string' }, activeWip: { type: 'integer', minimum: 0 }, wipLimit: { type: 'integer', minimum: 1 },
+          wipText: { type: 'string' }, serviceStatus: { const: 'ready' },
+        },
       },
     },
   },

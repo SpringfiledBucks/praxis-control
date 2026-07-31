@@ -22,6 +22,7 @@ import {
   graphResponseSchema,
   metaResponseSchema,
   portableExportResponseSchema,
+  widgetSummaryResponseSchema,
 } from '../contracts/api.js';
 
 describe('PGlite lightweight profile', () => {
@@ -113,6 +114,11 @@ describe('PGlite lightweight profile', () => {
       const meta = metaResponseSchema.parse(response.body);
       expect(meta.apiVersion).toBe(API_VERSION);
       expect(meta.capabilities.portableExport).toBe(true);
+      expect(meta.capabilities.widgetSummary).toBe(true);
+    });
+    await request(app).get('/api/widgets/summary').expect(200).expect('cache-control', 'private, no-store').expect((response) => {
+      const summary = widgetSummaryResponseSchema.parse(response.body);
+      expect(summary.wipLimit).toBeGreaterThan(0);
     });
     await request(app).get('/api/system/runtime').expect(403);
     await request(app)
@@ -421,7 +427,10 @@ describe('PGlite lightweight profile', () => {
     await request(app).get('/health').expect(200);
     await request(app).get('/health/live').expect(200);
     await request(app).get('/health/ready').expect(200);
+    await request(app).get('/sw.js').expect(200).expect('service-worker-allowed', '/');
+    await request(app).get('/static/manifest.webmanifest').expect(200);
     await request(app).get('/').expect(302).expect('location', '/login');
+    await request(app).get('/api/widgets/summary').expect(401);
     await request(app).get('/api/dashboard').expect(401).expect({ status: 'error', message: '未通过访问认证。' });
     await request(app)
       .get('/api/dashboard')

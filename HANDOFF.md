@@ -61,6 +61,7 @@
 - 可以开始规划大模型接入，首批只做结构化建议、复盘草稿、事实检索和规则解释；模型不能决定硬门槛、静默写入正式事实或自动执行外部动作；
 - 具体整改顺序、标准云部署、小组件和模型接入门槛见 `docs/plans/2026-07-31-remediation-service-web-widget-llm.md`。
 - 标准单节点云部署代码基线已加入 `infra/cloud/`：独立一次性迁移、单应用副本、回环发布、只读/降权容器和迁移感知的存活/就绪双探针；Gitea run 93 三项作业均成功。真实 OCI 构建、域名、证书、digest 镜像和恢复演练未完成前仍不得称为生产可用，详见 `docs/status/2026-07-31-cloud-deployment-foundation.md`。
+- Web/PWA 已加入不缓存业务数据的离线外壳、安装清单和受认证保护的最小小组件摘要 API；Adaptive Card 与工作线程仅提供只读摘要和深链。PWA 清单尚未注册 Windows `widgets` 成员，Windows 真机、公开 HTTPS、截图和可信分发完成前状态保持 NOT VERIFIED，详见 `docs/status/2026-07-31-pwa-widget-foundation.md` 与 `docs/pwa-widget-guide.md`。
 
 ## 当前外部状态
 

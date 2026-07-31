@@ -1,0 +1,40 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "PRAXIS CONTROL",
+      "size": "Small",
+      "weight": "Bolder",
+      "color": "Accent"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${mainAction}",
+      "size": "Large",
+      "weight": "Bolder",
+      "wrap": true,
+      "maxLines": 3
+    },
+    {
+      "type": "TextBlock",
+      "text": "${capacityText}",
+      "wrap": true,
+      "spacing": "Medium"
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        { "title": "复盘", "value": "${reviewText}" },
+        { "title": "组合", "value": "${wipText}" },
+        { "title": "服务", "value": "${serviceStatus}" }
+      ]
+    }
+  ],
+  "actions": [
+    { "type": "Action.Execute", "title": "打开工作台", "verb": "open-dashboard" },
+    { "type": "Action.Execute", "title": "记录决策", "verb": "new-checkin" }
+  ]
+}

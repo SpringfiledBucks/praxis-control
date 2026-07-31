@@ -5,6 +5,14 @@ document.querySelectorAll('input[type="range"]').forEach((input) => {
   sync();
 });
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((error) => {
+      console.warn('Praxis Control service worker registration failed.', error);
+    });
+  });
+}
+
 const riskLevel = document.querySelector('#risk-level');
 const riskQuestions = document.querySelector('#risk-questions');
 if (riskLevel && riskQuestions) {
