@@ -1,6 +1,6 @@
 {
   "name": "praxis-control",
-  "version": "0.1.0",
+  "version": "0.2.0-beta.1",
   "private": true,
   "description": "个人实践与决策系统：动态交互、可解释分析与审计闭环",
   "type": "module",

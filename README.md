@@ -4,16 +4,16 @@ Praxis Control 是一个本地优先的个人实践与决策系统，围绕以�
 
 > 现实输入 → 可解释分析 → 人工确认 → 执行结果 → 复盘归因 → 审计留痕
 
-当前版本为 **0.1.0 MVP**，适合个人试用和协作测试，不建议直接用于无人值守的生产环境。
+当前版本为 **0.2.0-beta.1 测试版**，适合个人试用和协作测试，不建议直接用于无人值守的生产环境。
 
 ## 下载与平台支持
 
-请从 [GitHub Releases](https://github.com/SpringfiledBucks/praxis-control/releases/latest) 下载与系统匹配的文件。
+请从 [GitHub Releases](https://github.com/SpringfiledBucks/praxis-control/releases) 下载与系统匹配的文件。测试版会标记为 Pre-release，不会取代最新稳定版。
 
 | 平台 | 发布文件 | 状态 | 使用方式 |
 | --- | --- | --- | --- |
-| Windows 11 x64 | `PraxisControl-0.1.0-win-x64.zip` | 已验证、推荐 | 解压后双击 `PraxisControl.cmd` |
-| Linux | `PraxisControl-0.1.0-linux.tar.gz` | 已验证 GTK 客户端；需系统依赖 | 解压后先运行 `./install-dependencies.sh`，再运行 `./praxis-control` |
+| Windows 11 x64 | `PraxisControl-0.2.0-beta.1-win-x64.zip` | 已完成本机验收，外部测试中 | 解压后双击 `PraxisControl.cmd` |
+| Linux | `PraxisControl-0.2.0-beta.1-linux.tar.gz` | 已完成 Gitea Linux 验收，外部测试中 | 解压后先运行 `./install-dependencies.sh`，再运行 `./praxis-control` |
 | macOS | 无 | 暂不支持 | 尚未进入设计、构建或测试范围 |
 
 Windows 包内置 Node.js 24、生产依赖和自包含 WinUI 3 客户端，不需要管理员权限。Linux 包不内置 Node.js 与桌面运行库，需要 Node.js 24+、GJS、GTK4、libadwaita 和 libsoup 3；具体发行版安装方式见包内 `README.zh-CN.txt`。
@@ -35,7 +35,7 @@ Windows 包内置 Node.js 24、生产依赖和自包含 WinUI 3 客户端，不�
 
 ### Windows 11 x64
 
-1. 解压 `PraxisControl-0.1.0-win-x64.zip`；
+1. 解压 `PraxisControl-0.2.0-beta.1-win-x64.zip`；
 2. 双击 `PraxisControl.cmd` 启动本地服务和 Windows 原生客户端；
 3. 使用 `PraxisControl-Web.cmd`、`PraxisControl-TUI.cmd` 或 `praxis.cmd` 进入其他客户端；
 4. 双击 `PraxisControl-Stop.cmd` 安全关闭服务。

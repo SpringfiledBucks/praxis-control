@@ -1,4 +1,4 @@
-project('praxis-control-linux', version: '0.1.0', meson_version: '>= 0.60')
+project('praxis-control-linux', version: '0.2.0-beta.1', meson_version: '>= 0.60')
 
 gnome = import('gnome')
 prefix = get_option('prefix')

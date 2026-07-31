@@ -5,7 +5,7 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
 config_file=${PRAXIS_CONFIG_FILE:-"$script_dir/.env"}
 stack_prefix=${PRAXIS_STACK_PREFIX:-praxis-control-full}
-application_image=${PRAXIS_APPLICATION_IMAGE:-praxis-control-full:0.1.0}
+application_image=${PRAXIS_APPLICATION_IMAGE:-praxis-control-full:0.2.0-beta.1}
 database_image='timescale/timescaledb@sha256:51eb3bcdfc41f481c797026813d9d457fb5cbc8ea370a65640d8cda13a4040c1'
 database_container="$stack_prefix-database"
 application_container="$stack_prefix-application"
