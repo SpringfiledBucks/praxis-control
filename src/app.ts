@@ -40,7 +40,7 @@ export function createApp(database: Database, config: AppConfig, system?: System
   const loginRateLimiter = new LoginRateLimiter();
   app.use((req, res, next) => {
     res.locals.authenticated = config.accessMode === 'local';
-    if (req.path === '/health' || req.path.startsWith('/static/')) return next();
+    if (req.path === '/health' || req.path.startsWith('/health/') || req.path.startsWith('/static/')) return next();
     if (system && req.path.startsWith('/api/') && req.get('authorization') === `Bearer ${system.apiToken}`) {
       res.locals.authenticated = true;
       res.set('Cache-Control', 'no-store');
@@ -112,7 +112,7 @@ export function createApp(database: Database, config: AppConfig, system?: System
 
   app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : '未知错误';
-    const isApi = req.path.startsWith('/api/') || req.path === '/health';
+    const isApi = req.path.startsWith('/api/') || req.path === '/health' || req.path.startsWith('/health/');
     const status = error instanceof BusinessRuleError ? error.statusCode
       : error instanceof ResourceNotFoundError ? error.statusCode
         : error instanceof ZodError ? 400

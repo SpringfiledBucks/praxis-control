@@ -191,6 +191,8 @@ Web/API 请求
 - 单节点标准云部署、HTTPS、secret、备份恢复和升级回滚；
 - Web PWA 基线和小组件摘要 API。
 
+进度（2026-07-31）：OCI Dockerfile、独立迁移任务、单节点 Compose、安全容器边界和迁移感知的双探针已实现，等待权威 CI 与隔离容器验收；HTTPS、digest 固定、备份恢复演练及 PWA 仍未完成。
+
 ### 0.3.0-alpha.2：Windows 小组件验证
 
 - PWA 小组件、Windows 11 真实交互和认证失效验收；

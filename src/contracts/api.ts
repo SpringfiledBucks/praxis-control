@@ -97,7 +97,14 @@ export const portableExportResponseSchema = z.object({
 export const healthResponseSchema = z.object({
   status: z.enum(['ok', 'degraded']),
   database: z.enum(['connected', 'unavailable']),
+  migrations: z.enum(['current', 'outdated', 'unknown']),
   backend: z.enum(['pglite', 'postgres']).optional(),
+  rulesetVersion: z.string().min(1),
+});
+
+export const livenessResponseSchema = z.object({
+  status: z.literal('ok'),
+  service: z.literal('live'),
   rulesetVersion: z.string().min(1),
 });
 

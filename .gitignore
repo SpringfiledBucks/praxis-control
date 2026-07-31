@@ -16,6 +16,8 @@ clients/**/obj/
 !/infra/full/secrets/README.md
 /infra/full/backups/
 /infra/full/.state/
+/infra/cloud/secrets/*
+!/infra/cloud/secrets/README.md
 
 # 本地权威参考资料可能包含个人信息；需求已提炼到 HANDOFF.md 和 ADR。
 /个人实践与决策系统_*.zip

@@ -31,6 +31,8 @@ describe('shared API contract', () => {
       '/api/system/runtime',
       '/api/system/shutdown',
       '/health',
+      '/health/live',
+      '/health/ready',
     ]);
   });
 

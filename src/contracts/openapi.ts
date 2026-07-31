@@ -180,6 +180,25 @@ export const openApiDocument = {
         },
       },
     },
+    '/health/live': {
+      get: {
+        summary: '检查服务进程是否存活',
+        operationId: 'getLiveness',
+        responses: {
+          '200': { description: '服务进程存活', content: { 'application/json': { schema: { $ref: '#/components/schemas/Liveness' } } } },
+        },
+      },
+    },
+    '/health/ready': {
+      get: {
+        summary: '检查服务和数据库是否可接收流量',
+        operationId: 'getReadiness',
+        responses: {
+          '200': { description: '服务已就绪', content: { 'application/json': { schema: { $ref: '#/components/schemas/Health' } } } },
+          '503': { description: '数据库不可用', content: { 'application/json': { schema: { $ref: '#/components/schemas/Health' } } } },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -302,8 +321,12 @@ export const openApiDocument = {
         },
       },
       Health: {
-        type: 'object', required: ['status', 'database', 'rulesetVersion'], additionalProperties: false,
-        properties: { status: { enum: ['ok', 'degraded'] }, database: { enum: ['connected', 'unavailable'] }, backend: { enum: ['pglite', 'postgres'] }, rulesetVersion: { type: 'string' } },
+        type: 'object', required: ['status', 'database', 'migrations', 'rulesetVersion'], additionalProperties: false,
+        properties: { status: { enum: ['ok', 'degraded'] }, database: { enum: ['connected', 'unavailable'] }, migrations: { enum: ['current', 'outdated', 'unknown'] }, backend: { enum: ['pglite', 'postgres'] }, rulesetVersion: { type: 'string' } },
+      },
+      Liveness: {
+        type: 'object', required: ['status', 'service', 'rulesetVersion'], additionalProperties: false,
+        properties: { status: { const: 'ok' }, service: { const: 'live' }, rulesetVersion: { type: 'string' } },
       },
     },
   },

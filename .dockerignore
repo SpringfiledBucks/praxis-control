@@ -9,6 +9,7 @@ clients
 docs
 infra/full/secrets
 infra/full/.state
+infra/cloud/secrets
 .env
 **/.env
 *.tar

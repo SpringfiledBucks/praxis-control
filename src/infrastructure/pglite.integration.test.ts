@@ -12,7 +12,7 @@ import { loadConfig, type AppConfig } from '../config.js';
 import { restorePGliteBackup } from './backup.js';
 import { verifyAuditChain } from './audit.js';
 import { createDatabase, type Database } from './db.js';
-import { runMigrations } from './migrations.js';
+import { runMigrations, verifyMigrationState } from './migrations.js';
 import request from 'supertest';
 import {
   API_VERSION,
@@ -83,6 +83,7 @@ describe('PGlite lightweight profile', () => {
     await database.close();
     database = await createDatabase(config);
     expect(await runMigrations(database)).toEqual([]);
+    expect(await verifyMigrationState(database)).toEqual({ current: true, missing: [], changed: [], unexpected: [] });
     const projects = await database.query<{ title: string }>('SELECT title FROM core.projects WHERE title = $1', ['验证跨平台轻量闭环']);
     expect(projects.rows).toHaveLength(1);
   });
@@ -97,6 +98,16 @@ describe('PGlite lightweight profile', () => {
 
     await request(app).get('/health').expect(200).expect((response) => {
       expect(response.body.backend).toBe('pglite');
+      expect(response.body.migrations).toBe('current');
+    });
+    await request(app).get('/health/live').expect(200).expect({
+      status: 'ok',
+      service: 'live',
+      rulesetVersion: config.rulesetVersion,
+    });
+    await request(app).get('/health/ready').expect(200).expect((response) => {
+      expect(response.body.backend).toBe('pglite');
+      expect(response.body.migrations).toBe('current');
     });
     await request(app).get('/api/meta').expect(200).expect((response) => {
       const meta = metaResponseSchema.parse(response.body);
@@ -378,6 +389,8 @@ describe('PGlite lightweight profile', () => {
     });
 
     await request(app).get('/health').expect(200);
+    await request(app).get('/health/live').expect(200);
+    await request(app).get('/health/ready').expect(200);
     await request(app).get('/').expect(401).expect(/访问未授权/);
     await request(app).get('/api/dashboard').expect(401).expect({ status: 'error', message: '未通过 Tailscale 身份校验。' });
     await request(app).get('/api/dashboard').set('tailscale-user-login', 'intruder@example.com').expect(401);
@@ -406,6 +419,8 @@ describe('PGlite lightweight profile', () => {
     });
 
     await request(app).get('/health').expect(200);
+    await request(app).get('/health/live').expect(200);
+    await request(app).get('/health/ready').expect(200);
     await request(app).get('/').expect(302).expect('location', '/login');
     await request(app).get('/api/dashboard').expect(401).expect({ status: 'error', message: '未通过访问认证。' });
     await request(app)

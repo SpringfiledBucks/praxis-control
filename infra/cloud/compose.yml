@@ -1,0 +1,118 @@
+name: praxis-control-cloud
+
+services:
+  database:
+    image: ${PRAXIS_POSTGRES_IMAGE:-postgres:16-bookworm}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: praxis_cluster_admin
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/praxis_db_admin_password
+    secrets:
+      - praxis_db_admin_password
+      - praxis_db_password
+    volumes:
+      - database-data:/var/lib/postgresql/data
+      - ./init-database.sh:/docker-entrypoint-initdb.d/010-praxis-control.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      - backend
+
+  migration:
+    image: ${PRAXIS_APP_IMAGE:-praxis-control-cloud:local}
+    build:
+      context: ../..
+      dockerfile: infra/cloud/Dockerfile
+    command: ["node", "dist/cli/migrate.js"]
+    restart: "no"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment: &application-environment
+      NODE_ENV: production
+      APP_HOST: 0.0.0.0
+      APP_PORT: 4310
+      PRAXIS_DATA_DIR: /tmp/praxis-control
+      XDG_RUNTIME_DIR: /tmp/praxis-runtime
+      DATABASE_MODE: postgres
+      DATABASE_HOST: database
+      DATABASE_PORT: 5432
+      DATABASE_NAME: praxis_control
+      DATABASE_USER: praxis_control
+      DATABASE_PASSWORD_FILE: /run/secrets/praxis_db_password
+      DATABASE_SSL: "false"
+      ACCESS_MODE: password
+      ACCESS_PASSWORD_FILE: /run/secrets/praxis_access_password
+      SESSION_SECRET_FILE: /run/secrets/praxis_session_secret
+      SESSION_COOKIE_SECURE: "true"
+      RUN_MIGRATIONS: "true"
+      RULESET_VERSION: ${RULESET_VERSION:-2026.07.28-mvp1}
+    secrets: &application-secrets
+      - praxis_db_password
+      - praxis_access_password
+      - praxis_session_secret
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,uid=1000,gid=1000,mode=0700
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - backend
+
+  application:
+    image: ${PRAXIS_APP_IMAGE:-praxis-control-cloud:local}
+    build:
+      context: ../..
+      dockerfile: infra/cloud/Dockerfile
+    restart: unless-stopped
+    init: true
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    environment:
+      <<: *application-environment
+      RUN_MIGRATIONS: "false"
+    secrets: *application-secrets
+    ports:
+      - "127.0.0.1:${PRAXIS_BIND_PORT:-4310}:4310"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,uid=1000,gid=1000,mode=0700
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4310/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 15s
+    networks:
+      - backend
+      - edge
+
+volumes:
+  database-data:
+
+networks:
+  backend:
+    internal: true
+  edge:
+
+secrets:
+  praxis_db_admin_password:
+    file: ${PRAXIS_DB_ADMIN_PASSWORD_FILE:-./secrets/database-admin-password.txt}
+  praxis_db_password:
+    file: ${PRAXIS_DB_PASSWORD_FILE:-./secrets/database-app-password.txt}
+  praxis_access_password:
+    file: ${PRAXIS_ACCESS_PASSWORD_FILE:-./secrets/access-password.txt}
+  praxis_session_secret:
+    file: ${PRAXIS_SESSION_SECRET_FILE:-./secrets/session-secret.txt}

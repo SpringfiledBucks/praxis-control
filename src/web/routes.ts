@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { CheckinService } from '../application/checkins.js';
 import { loadDashboard } from '../application/dashboard.js';
@@ -7,6 +7,7 @@ import { loadWeeklySummary, saveWeeklyReview } from '../application/reviews.js';
 import { loadKnowledgeGraph } from '../application/graph.js';
 import { createPortableExport } from '../application/export.js';
 import { verifyAuditChain } from '../infrastructure/audit.js';
+import { verifyMigrationState } from '../infrastructure/migrations.js';
 import { parseDailyBody } from './parsing.js';
 import type { Database } from '../infrastructure/db.js';
 import { API_VERSION } from '../contracts/api.js';
@@ -278,14 +279,29 @@ export function createRouter(database: Database, rulesetVersion: string, system?
     } catch (error) { return next(error); }
   });
 
-  router.get('/health', async (_req, res) => {
+  router.get('/health/live', (_req, res) => {
+    res.json({ status: 'ok', service: 'live', rulesetVersion });
+  });
+
+  const readinessHandler: RequestHandler = async (_req, res) => {
     try {
       await database.query('SELECT 1');
-      res.json({ status: 'ok', database: 'connected', backend: database.backend, rulesetVersion });
     } catch {
-      res.status(503).json({ status: 'degraded', database: 'unavailable', rulesetVersion });
+      return res.status(503).json({ status: 'degraded', database: 'unavailable', migrations: 'unknown', rulesetVersion });
     }
-  });
+    try {
+      const migrationState = await verifyMigrationState(database);
+      if (!migrationState.current) {
+        return res.status(503).json({ status: 'degraded', database: 'connected', migrations: 'outdated', backend: database.backend, rulesetVersion });
+      }
+      return res.json({ status: 'ok', database: 'connected', migrations: 'current', backend: database.backend, rulesetVersion });
+    } catch {
+      return res.status(503).json({ status: 'degraded', database: 'connected', migrations: 'outdated', backend: database.backend, rulesetVersion });
+    }
+  };
+
+  router.get('/health/ready', readinessHandler);
+  router.get('/health', readinessHandler);
 
   router.post('/api/system/shutdown', (req, res) => {
     if (!system || req.body.token !== system.shutdownToken) {
