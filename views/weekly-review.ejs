@@ -1,11 +1,22 @@
 <%- include('partials/head', { title }) %>
-<section class="page-heading"><div><p class="eyebrow">L1 · 滚动规划</p><h1>每周复盘</h1><p>从最近七天的正式记录开始，确认主要矛盾是否变化、瓶颈是否转移。</p></div></section>
-<section class="score-grid"><article><span>决策记录</span><strong><%= summary.checkin_count || 0 %></strong></article><article><span>已闭环</span><strong><%= summary.reviewed_count || 0 %></strong></article><article><span>决策过程</span><strong><%= summary.average_decision_quality || '—' %></strong></article><article><span>执行质量</span><strong><%= summary.average_execution_quality || '—' %></strong></article></section>
+<section class="page-heading"><div><p class="eyebrow">L1 · 自然周规划</p><h1>每周复盘</h1><p>统计范围为 <%= summary.weekStart %> 至 <%= summary.weekEndExclusive %>（不含结束日）。先核对系统事实，再记录你的修正和判断。</p></div></section>
+<section class="score-grid"><article><span>系统决策记录</span><strong><%= summary.checkinCount %></strong></article><article><span>系统已闭环</span><strong><%= summary.reviewedCount %></strong></article><article><span>系统决策过程</span><strong><%= summary.averageDecisionQuality ?? '—' %></strong></article><article><span>系统执行质量</span><strong><%= summary.averageExecutionQuality ?? '—' %></strong></article></section>
 <form method="post" action="/reviews/weekly" class="panel form-stack weekly-form">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <input type="hidden" name="weekStart" value="<%= weekStart %>"><input type="hidden" name="checkinCount" value="<%= summary.checkin_count || 0 %>"><input type="hidden" name="reviewedCount" value="<%= summary.reviewed_count || 0 %>"><input type="hidden" name="averageDecisionQuality" value="<%= summary.average_decision_quality || '' %>"><input type="hidden" name="averageExecutionQuality" value="<%= summary.average_execution_quality || '' %>">
-  <label>主要矛盾是否仍有效<textarea name="mainContradictionStatus" required><%= summary.common_contradiction || '' %></textarea></label>
-  <label>当前瓶颈<textarea name="currentBottleneck" required><%= summary.common_bottleneck || '' %></textarea></label>
+  <input type="hidden" name="weekStart" value="<%= weekStart %>">
+  <div>
+    <p class="eyebrow">可审计调整</p><h2>报告统计</h2>
+    <p class="form-help">下面默认采用系统计算值。允许修改；任何差异都会和系统原值一起保存，并要求填写原因。</p>
+  </div>
+  <div class="field-grid two">
+    <label>报告决策记录<input type="number" name="reportedCheckinCount" min="0" value="<%= summary.checkinCount %>" required></label>
+    <label>报告已闭环<input type="number" name="reportedReviewedCount" min="0" value="<%= summary.reviewedCount %>" required></label>
+    <label>报告决策过程平均值<input type="number" name="reportedAverageDecisionQuality" min="0" max="10" step="0.01" value="<%= summary.averageDecisionQuality ?? '' %>"></label>
+    <label>报告执行质量平均值<input type="number" name="reportedAverageExecutionQuality" min="0" max="10" step="0.01" value="<%= summary.averageExecutionQuality ?? '' %>"></label>
+  </div>
+  <label>统计调整原因<textarea name="adjustmentReason" placeholder="只有修改上述系统统计时必填；说明遗漏、事实修正或口径差异。"></textarea></label>
+  <label>主要矛盾是否仍有效<textarea name="mainContradictionStatus" required><%= summary.latestMainContradiction %></textarea></label>
+  <label>当前瓶颈<textarea name="currentBottleneck" required><%= summary.latestBottleneck %></textarea></label>
   <label>新事实、被削弱的假设或数据问题<textarea name="evidenceUpdate" required></textarea></label>
   <label>应扩大、维持、暂停或退出什么<textarea name="portfolioChange" required></textarea></label>
   <label>下周一个突破目标<textarea name="nextBreakthrough" required></textarea></label>

@@ -14,6 +14,7 @@ import { openApiDocument } from '../contracts/openapi.js';
 import { projectStatuses } from '../domain/portfolio.js';
 import { decisionLifecycleActionStatuses } from '../domain/decision-lifecycle.js';
 import { outcomeInputSchema } from '../domain/outcome.js';
+import { currentWeekStart } from '../platform/dates.js';
 
 export type SystemControl = {
   csrfToken: string;
@@ -212,11 +213,8 @@ export function createRouter(database: Database, rulesetVersion: string, system?
 
   router.get('/reviews/weekly', async (_req, res, next) => {
     try {
-      const summary = await loadWeeklySummary(database);
-      const now = new Date();
-      const day = now.getDay() || 7;
-      now.setDate(now.getDate() - day + 1);
-      const weekStart = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' });
+      const weekStart = currentWeekStart();
+      const summary = await loadWeeklySummary(database, weekStart);
       res.render('weekly-review', { title: '每周复盘', summary, weekStart });
     } catch (error) { next(error); }
   });
@@ -225,17 +223,32 @@ export function createRouter(database: Database, rulesetVersion: string, system?
     try {
       const input = z.object({
         weekStart: z.iso.date(),
-        checkinCount: z.coerce.number().int().min(0),
-        reviewedCount: z.coerce.number().int().min(0),
-        averageDecisionQuality: z.preprocess((value) => value === '' ? null : value, z.coerce.number().min(0).max(10).nullable()),
-        averageExecutionQuality: z.preprocess((value) => value === '' ? null : value, z.coerce.number().min(0).max(10).nullable()),
+        reportedCheckinCount: z.coerce.number().int().min(0),
+        reportedReviewedCount: z.coerce.number().int().min(0),
+        reportedAverageDecisionQuality: z.preprocess((value) => value === '' || value === undefined ? null : value, z.coerce.number().min(0).max(10).nullable()),
+        reportedAverageExecutionQuality: z.preprocess((value) => value === '' || value === undefined ? null : value, z.coerce.number().min(0).max(10).nullable()),
+        adjustmentReason: z.string().trim().max(2000).default(''),
         mainContradictionStatus: z.string().trim().min(2).max(2000),
         currentBottleneck: z.string().trim().min(2).max(2000),
         evidenceUpdate: z.string().trim().min(2).max(2000),
         portfolioChange: z.string().trim().min(2).max(2000),
         nextBreakthrough: z.string().trim().min(2).max(2000),
       }).parse(req.body);
-      await saveWeeklyReview(database, rulesetVersion, input);
+      await saveWeeklyReview(database, rulesetVersion, {
+        weekStart: input.weekStart,
+        reported: {
+          checkinCount: input.reportedCheckinCount,
+          reviewedCount: input.reportedReviewedCount,
+          averageDecisionQuality: input.reportedAverageDecisionQuality,
+          averageExecutionQuality: input.reportedAverageExecutionQuality,
+        },
+        adjustmentReason: input.adjustmentReason,
+        mainContradictionStatus: input.mainContradictionStatus,
+        currentBottleneck: input.currentBottleneck,
+        evidenceUpdate: input.evidenceUpdate,
+        portfolioChange: input.portfolioChange,
+        nextBreakthrough: input.nextBreakthrough,
+      });
       res.redirect('/?saved=weekly-review');
     } catch (error) { next(error); }
   });

@@ -63,7 +63,8 @@ const importTables: readonly ImportTable[] = [
   },
   {
     collection: 'weeklyReviews', table: 'decision.weekly_reviews',
-    columns: ['id', 'week_start', 'checkin_count', 'reviewed_count', 'average_decision_quality', 'average_execution_quality', 'main_contradiction_status', 'current_bottleneck', 'evidence_update', 'portfolio_change', 'next_breakthrough', 'created_at'],
+    columns: ['id', 'week_start', 'checkin_count', 'reviewed_count', 'average_decision_quality', 'average_execution_quality', 'main_contradiction_status', 'current_bottleneck', 'evidence_update', 'portfolio_change', 'next_breakthrough', 'computed_snapshot', 'manual_adjustments', 'reported_snapshot', 'adjustment_reason', 'created_at'],
+    jsonColumns: ['computed_snapshot', 'manual_adjustments', 'reported_snapshot'],
   },
   {
     collection: 'knowledgeObjects', table: 'core.knowledge_objects',

@@ -7,7 +7,7 @@ import { ensureSeedData } from '../application/bootstrap.js';
 import { changeProjectStatus, createProject } from '../application/projects.js';
 import { CheckinService } from '../application/checkins.js';
 import { loadPortfolioContext } from '../application/portfolio.js';
-import { saveWeeklyReview } from '../application/reviews.js';
+import { loadWeeklySummary, saveWeeklyReview } from '../application/reviews.js';
 import { loadConfig, type AppConfig } from '../config.js';
 import { restorePGliteBackup } from './backup.js';
 import { verifyAuditChain } from './audit.js';
@@ -67,7 +67,7 @@ describe('PGlite lightweight profile', () => {
       targetDirectory: restoreTarget,
       sourceDataDirectory: config.pgliteDataDir,
     });
-    expect(restored.migrations).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads', '004_decision_project_lifecycle']);
+    expect(restored.migrations).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads', '004_decision_project_lifecycle', '005_weekly_review_provenance']);
     expect(restored.projects).toBeGreaterThan(0);
     await expect(restorePGliteBackup({
       backupFile: backup!,
@@ -114,6 +114,7 @@ describe('PGlite lightweight profile', () => {
       expect(response.body.paths['/api/dashboard']).toBeTruthy();
     });
     await request(app).get('/').expect(200).expect(/实践控制台/);
+    await request(app).get('/reviews/weekly').expect(200).expect(/可审计调整/).expect(/系统决策记录/);
     await request(app).post('/api/checkins/analyze').send({}).expect(403);
 
     const input = JSON.parse(await readFile(path.join(process.cwd(), 'src', 'infrastructure', 'test-fixtures', 'daily-input.json'), 'utf8'));
@@ -298,20 +299,69 @@ describe('PGlite lightweight profile', () => {
   });
 
   it('keeps repeated weekly reviews on one aggregate audit chain', async () => {
+    const computed = await loadWeeklySummary(database, '2026-07-27');
     const input = {
-      weekStart: '2026-07-27', checkinCount: 1, reviewedCount: 1,
-      averageDecisionQuality: 8, averageExecutionQuality: 7,
+      weekStart: '2026-07-27',
+      reported: {
+        checkinCount: computed.checkinCount,
+        reviewedCount: computed.reviewedCount,
+        averageDecisionQuality: computed.averageDecisionQuality,
+        averageExecutionQuality: computed.averageExecutionQuality,
+      },
+      adjustmentReason: '',
       mainContradictionStatus: '主要矛盾仍然有效', currentBottleneck: '业务规则缺少服务端强制',
       evidenceUpdate: 'WIP 绕过测试已经复现', portfolioChange: '暂停低优先级项目',
       nextBreakthrough: '完成第一批组合治理规则',
     };
     const firstId = await saveWeeklyReview(database, config.rulesetVersion, input);
-    const secondId = await saveWeeklyReview(database, config.rulesetVersion, { ...input, evidenceUpdate: '服务端强制测试已经通过' });
+    await expect(saveWeeklyReview(database, config.rulesetVersion, {
+      ...input,
+      reported: { ...input.reported, checkinCount: input.reported.checkinCount + 1 },
+    })).rejects.toMatchObject({ code: 'WEEKLY_ADJUSTMENT_REASON_REQUIRED', statusCode: 409 });
+    const adjusted = {
+      ...input,
+      reported: { ...input.reported, checkinCount: input.reported.checkinCount + 1 },
+      adjustmentReason: '补记一条未进入系统的线下决策',
+      evidenceUpdate: '服务端强制测试已经通过',
+    };
+    const secondId = await saveWeeklyReview(database, config.rulesetVersion, adjusted);
     expect(secondId).toBe(firstId);
+    const saved = await database.query<{
+      computed_snapshot: Record<string, unknown>;
+      manual_adjustments: Record<string, unknown>;
+      reported_snapshot: Record<string, unknown>;
+      adjustment_reason: string;
+    }>('SELECT computed_snapshot, manual_adjustments, reported_snapshot, adjustment_reason FROM decision.weekly_reviews WHERE id = $1', [firstId]);
+    expect(saved.rows[0]?.computed_snapshot).toMatchObject({ checkinCount: computed.checkinCount });
+    expect(saved.rows[0]?.manual_adjustments).toMatchObject({
+      checkinCount: { computed: computed.checkinCount, reported: computed.checkinCount + 1 },
+    });
+    expect(saved.rows[0]?.reported_snapshot).toMatchObject({ checkinCount: computed.checkinCount + 1 });
+    expect(saved.rows[0]?.adjustment_reason).toBe('补记一条未进入系统的线下决策');
+    const app = createApp(database, config, {
+      csrfToken: 'weekly-csrf-token',
+      apiToken: 'weekly-api-token-weekly-api-token',
+      shutdownToken: 'weekly-shutdown-token-weekly-shutdown-token',
+      requestShutdown: () => undefined,
+    });
+    await request(app).post('/reviews/weekly').type('form').send({
+      _csrf: 'weekly-csrf-token',
+      weekStart: '2026-07-27',
+      reportedCheckinCount: computed.checkinCount,
+      reportedReviewedCount: computed.reviewedCount,
+      reportedAverageDecisionQuality: computed.averageDecisionQuality ?? '',
+      reportedAverageExecutionQuality: computed.averageExecutionQuality ?? '',
+      adjustmentReason: '',
+      mainContradictionStatus: '主要矛盾仍然有效',
+      currentBottleneck: '业务规则缺少服务端强制',
+      evidenceUpdate: '页面字段合同已验证',
+      portfolioChange: '保持当前组合',
+      nextBreakthrough: '进入标准服务部署批次',
+    }).expect(302).expect('location', '/?saved=weekly-review');
     const events = await database.query<{ aggregate_id: string }>(
       "SELECT aggregate_id FROM governance.audit_events WHERE aggregate_type = 'weekly_review' ORDER BY created_at",
     );
-    expect(events.rows.filter((event) => event.aggregate_id === firstId)).toHaveLength(2);
+    expect(events.rows.filter((event) => event.aggregate_id === firstId)).toHaveLength(3);
     expect(await verifyAuditChain(database)).toMatchObject({ valid: true });
   });
 

@@ -68,7 +68,7 @@ describe.runIf(Boolean(postgresTestUrl))('PostgreSQL full profile', () => {
     expect(database.backend).toBe('postgres');
     expect(await runMigrations(database)).toEqual([]);
     const migrations = await database.query<{ version: string }>('SELECT version FROM governance.schema_migrations ORDER BY version');
-    expect(migrations.rows.map((row) => row.version)).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads', '004_decision_project_lifecycle']);
+    expect(migrations.rows.map((row) => row.version)).toEqual(['001_initial', '002_knowledge_graph', '003_audit_heads', '004_decision_project_lifecycle', '005_weekly_review_provenance']);
     expect(importedCounts.projects).toBeGreaterThan(0);
     expect(importedCounts.dailyCheckins).toBeGreaterThan(0);
     const importedDecision = await database.query<{ project_id: string }>(

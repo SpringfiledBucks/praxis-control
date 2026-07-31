@@ -29,7 +29,8 @@ const exports = [
   ['weeklyReviews', `SELECT id, to_char(week_start, 'YYYY-MM-DD') AS week_start,
     checkin_count, reviewed_count, average_decision_quality, average_execution_quality,
     main_contradiction_status, current_bottleneck, evidence_update, portfolio_change,
-    next_breakthrough, created_at FROM decision.weekly_reviews ORDER BY week_start, id`],
+    next_breakthrough, computed_snapshot, manual_adjustments, reported_snapshot,
+    adjustment_reason, created_at FROM decision.weekly_reviews ORDER BY week_start, id`],
 ] as const;
 
 export async function createPortableExport(database: Database, rulesetVersion: string): Promise<PortableExport> {
