@@ -52,7 +52,25 @@ require_text "$nginx_template" 'proxy_pass http://127.0.0.1:@@UPSTREAM_PORT@@;'
 require_text "$nginx_template" 'proxy_set_header X-Forwarded-For $remote_addr;'
 require_text "$nginx_template" 'proxy_set_header Tailscale-User-Login "";'
 require_text "$nginx_template" 'proxy_set_header Authorization "";'
+require_text "$nginx_template" 'Strict-Transport-Security "max-age=@@HSTS_MAX_AGE@@"'
+require_text "$cloud_dir/render-nginx.sh" 'PRAXIS_HSTS_MAX_AGE:-300'
 reject_text "$compose_file" 'privileged: true'
 reject_text "$compose_file" '0.0.0.0:${PRAXIS_BIND_PORT'
+
+render_root=$(mktemp -d)
+trap 'rm -rf "$render_root"' EXIT INT TERM
+PRAXIS_SERVER_NAME=praxis.example.invalid \
+PRAXIS_CERTIFICATE=/tmp/praxis-fullchain.pem \
+PRAXIS_CERTIFICATE_KEY=/tmp/praxis-key.pem \
+sh "$cloud_dir/render-nginx.sh" "$render_root/default.conf" >/dev/null
+require_text "$render_root/default.conf" 'Strict-Transport-Security "max-age=300"'
+if PRAXIS_SERVER_NAME=praxis.example.invalid \
+  PRAXIS_CERTIFICATE=/tmp/praxis-fullchain.pem \
+  PRAXIS_CERTIFICATE_KEY=/tmp/praxis-key.pem \
+  PRAXIS_HSTS_MAX_AGE=31536001 \
+  sh "$cloud_dir/render-nginx.sh" "$render_root/rejected.conf" >/dev/null 2>&1; then
+  echo 'render accepted an excessive HSTS duration' >&2
+  exit 1
+fi
 
 echo 'cloud static contract: PASS'

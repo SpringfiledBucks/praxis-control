@@ -17,6 +17,7 @@ server_name=${PRAXIS_SERVER_NAME:-}
 certificate=${PRAXIS_CERTIFICATE:-}
 certificate_key=${PRAXIS_CERTIFICATE_KEY:-}
 upstream_port=${PRAXIS_BIND_PORT:-4310}
+hsts_max_age=${PRAXIS_HSTS_MAX_AGE:-300}
 
 printf '%s' "$server_name" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9.-]*$' || fail 'PRAXIS_SERVER_NAME is invalid'
 for path_value in "$certificate" "$certificate_key"; do
@@ -24,6 +25,8 @@ for path_value in "$certificate" "$certificate_key"; do
 done
 case "$upstream_port" in ''|*[!0-9]*) fail 'PRAXIS_BIND_PORT must be numeric' ;; esac
 [ "$upstream_port" -ge 1024 ] && [ "$upstream_port" -le 65535 ] || fail 'PRAXIS_BIND_PORT must be between 1024 and 65535'
+case "$hsts_max_age" in ''|*[!0-9]*) fail 'PRAXIS_HSTS_MAX_AGE must be numeric' ;; esac
+[ "$hsts_max_age" -le 31536000 ] || fail 'PRAXIS_HSTS_MAX_AGE must not exceed 31536000'
 
 target_parent=$(CDPATH= cd -- "$(dirname -- "$target")" && pwd)
 temporary=$(mktemp "$target_parent/.praxis-nginx.XXXXXX")
@@ -35,6 +38,7 @@ sed \
   -e "s|@@CERTIFICATE@@|$certificate|g" \
   -e "s|@@CERTIFICATE_KEY@@|$certificate_key|g" \
   -e "s|@@UPSTREAM_PORT@@|$upstream_port|g" \
+  -e "s|@@HSTS_MAX_AGE@@|$hsts_max_age|g" \
   "$template" >"$temporary"
 
 ! grep -q '@@' "$temporary" || fail 'nginx template still contains unresolved placeholders'

@@ -1,0 +1,52 @@
+{
+  "id": "/",
+  "name": "Praxis Control 实践控制台",
+  "short_name": "Praxis Control",
+  "description": "淡雅、可审计的个人实践与决策工具。",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f0e8",
+  "theme_color": "#13251d",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/static/icons/praxis-control.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Praxis 今日摘要",
+      "short_name": "今日摘要",
+      "description": "查看今日主行动、计划可分配时间、待复盘数量与核心 WIP。",
+      "tag": "praxis-summary",
+      "template": "praxis-summary",
+      "ms_ac_template": "/static/widgets/praxis-summary-template.json",
+      "data": "/api/widgets/summary",
+      "type": "application/json",
+      "auth": true,
+      "update": 900,
+      "multiple": false,
+      "screenshots": [
+        {
+          "src": "/static/widgets/praxis-summary-picker-preview.png",
+          "sizes": "300x304",
+          "type": "image/png",
+          "platform": "Windows",
+          "label": "Praxis 今日摘要中型小组件，显示今日行动、时间、复盘和 WIP。"
+        }
+      ],
+      "icons": [
+        {
+          "src": "/static/icons/praxis-control.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}

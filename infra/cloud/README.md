@@ -48,6 +48,9 @@ The default image tags make local evaluation reproducible at the configuration
 level but are mutable registry references. Before production promotion, set
 `PRAXIS_APP_IMAGE` and `PRAXIS_POSTGRES_IMAGE` to tested digest-pinned image
 references (`repository@sha256:...`) and record them in the deployment log.
+The authoritative Gitea workflow publishes the application image after all
+quality jobs pass; use the digest from that workflow rather than rebuilding on
+the deployment host.
 
 ## Start and verify
 
@@ -86,6 +89,7 @@ existing configuration:
 PRAXIS_SERVER_NAME=praxis.example.net \
 PRAXIS_CERTIFICATE=/etc/letsencrypt/live/praxis.example.net/fullchain.pem \
 PRAXIS_CERTIFICATE_KEY=/etc/letsencrypt/live/praxis.example.net/privkey.pem \
+PRAXIS_HSTS_MAX_AGE=300 \
 sh render-nginx.sh /tmp/praxis-control.conf
 ```
 
@@ -93,7 +97,10 @@ Run `nginx -t` against the complete host configuration before installing the
 file or reloading Nginx. The template terminates TLS, forwards only to the
 loopback application port, replaces forwarding headers, and strips inbound
 identity and bearer-token headers. Certificate issuance and renewal remain the
-operator's responsibility.
+operator's responsibility. The renderer defaults HSTS to five minutes for the
+first controlled rollout. Raise it to at most `31536000` only after certificate
+renewal, monitoring, and proxy rollback have been exercised; a long HSTS value
+can make a broken TLS deployment persist in clients after server rollback.
 
 Back up and restore-test the database first. Set the new digest-pinned
 `PRAXIS_APP_IMAGE`, pull/build it, and run `docker compose up -d`. Compose runs

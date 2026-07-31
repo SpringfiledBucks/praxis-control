@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="304" viewBox="0 0 300 304">
+  <defs>
+    <clipPath id="card"><rect width="300" height="304" rx="22"/></clipPath>
+  </defs>
+  <g clip-path="url(#card)">
+    <rect width="300" height="304" fill="#f3f0e8"/>
+    <ellipse cx="278" cy="29" rx="70" ry="42" fill="none" stroke="#a6b9ad" stroke-width="2"/>
+    <path d="M220 -10 L310 58 L310 -10 Z" fill="#c9866b" opacity=".38"/>
+    <path d="M17 224 Q88 178 161 229 T300 220" fill="none" stroke="#d7b56d" stroke-width="2" opacity=".8"/>
+    <g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" fill="#13251d">
+      <text x="20" y="31" font-size="11" font-weight="700" letter-spacing="1.2">PRAXIS CONTROL</text>
+      <circle cx="266" cy="26" r="5" fill="#4f7d62"/>
+      <text x="20" y="72" font-size="13" fill="#627068">今日主行动</text>
+      <text x="20" y="101" font-size="22" font-weight="700">完成云端部署验收</text>
+      <rect x="20" y="120" width="213" height="34" rx="17" fill="#e3e8df"/>
+      <text x="36" y="142" font-size="13">今日计划可分配 90 分钟</text>
+      <g transform="translate(20 180)">
+        <text x="0" y="0" font-size="11" fill="#6c756e">待复盘</text>
+        <text x="0" y="28" font-size="20" font-weight="700">2</text>
+        <text x="88" y="0" font-size="11" fill="#6c756e">核心 WIP</text>
+        <text x="88" y="28" font-size="20" font-weight="700">2 / 3</text>
+        <text x="190" y="0" font-size="11" fill="#6c756e">服务</text>
+        <text x="190" y="28" font-size="14" font-weight="700" fill="#4f7d62">已连接</text>
+      </g>
+      <rect x="20" y="250" width="122" height="36" rx="10" fill="#13251d"/>
+      <text x="81" y="273" font-size="13" text-anchor="middle" fill="#f7f5ef">打开工作台</text>
+      <rect x="154" y="250" width="126" height="36" rx="10" fill="none" stroke="#839087"/>
+      <text x="217" y="273" font-size="13" text-anchor="middle">记录决策</text>
+    </g>
+  </g>
+  <rect x=".5" y=".5" width="299" height="303" rx="21.5" fill="none" stroke="#c8c3b4"/>
+</svg>
