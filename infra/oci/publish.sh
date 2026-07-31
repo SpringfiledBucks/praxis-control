@@ -90,7 +90,7 @@ logged_in=true
   --builder default \
   --platform "$NODE_BASE_PLATFORM" \
   --pull=false \
-  --provenance=mode=min \
+  --provenance=false \
   --metadata-file "$metadata_file" \
   --build-arg "NODE_BASE_IMAGE=$NODE_BASE_REF" \
   --label "org.opencontainers.image.revision=$commit" \

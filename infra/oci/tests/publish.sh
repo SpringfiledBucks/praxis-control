@@ -74,7 +74,7 @@ run_publish >/dev/null
 grep -F -- '"digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"' \
   "$root/output/image-lock.json" >/dev/null
 grep -F -- '--pull=false' "$root/docker.log" >/dev/null
-grep -F -- '--provenance=mode=min' "$root/docker.log" >/dev/null
+grep -F -- '--provenance=false' "$root/docker.log" >/dev/null
 if grep -F -- 'not-a-real-token' "$root/docker.log" >/dev/null; then
   echo 'registry token leaked into Docker arguments' >&2
   exit 1

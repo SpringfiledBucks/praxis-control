@@ -25,3 +25,5 @@ sha-<full-commit-sha>
 ```
 
 Buildx records the resulting `sha256` manifest digest. The workflow summary and the ignored `artifacts/oci/image-lock.json` record the commit, tag, digest, platform, and locked base-image digest without embedding a private registry address. Deployments must use the manifest digest rather than the tag.
+
+The current runner uses Buildx's Docker driver, which cannot emit attestations. The pipeline disables automatic provenance explicitly instead of pretending an attestation exists; adding signed provenance remains a separate upgrade that requires a supported builder and verification policy.
