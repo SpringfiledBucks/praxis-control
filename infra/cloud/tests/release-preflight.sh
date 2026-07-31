@@ -112,7 +112,7 @@ chmod 0700 "$test_root/bin/stat"
 run_preflight() {
   PATH="$test_root/bin:$PATH" \
   PRAXIS_CONFIG_FILE="$test_root/cloud.env" \
-  "$cloud_dir/release-preflight.sh"
+  sh "$cloud_dir/release-preflight.sh"
 }
 
 run_preflight >/dev/null
@@ -120,7 +120,7 @@ run_preflight >/dev/null
 cp "$test_root/cloud.env" "$test_root/mutable.env"
 sed -i 's|PRAXIS_APP_IMAGE=.*|PRAXIS_APP_IMAGE=praxis-control:latest|' "$test_root/mutable.env"
 if PATH="$test_root/bin:$PATH" PRAXIS_CONFIG_FILE="$test_root/mutable.env" \
-  "$cloud_dir/release-preflight.sh" >/dev/null 2>&1; then
+  sh "$cloud_dir/release-preflight.sh" >/dev/null 2>&1; then
   echo 'release preflight accepted a mutable application tag' >&2
   exit 1
 fi
