@@ -9,7 +9,7 @@ fail() {
   exit 1
 }
 
-for command_name in docker awk; do
+for command_name in docker awk dirname stat; do
   command -v "$command_name" >/dev/null 2>&1 || fail "$command_name is unavailable"
 done
 docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable'
@@ -32,6 +32,8 @@ printf '%s\n' "$secret_files" | while IFS= read -r secret_file; do
   [ -z "$secret_file" ] && continue
   [ -f "$secret_file" ] && [ -r "$secret_file" ] && [ -s "$secret_file" ] || fail "secret file is missing or empty: $secret_file"
   [ "$(awk 'END { print NR }' "$secret_file")" -eq 1 ] || fail "secret file must contain exactly one line: $secret_file"
+  [ "$(stat -c '%a' "$(dirname -- "$secret_file")")" = 700 ] || fail "secret directory must have mode 0700: $(dirname -- "$secret_file")"
+  [ "$(stat -c '%a' "$secret_file")" = 444 ] || fail "file-backed Compose secret must have mode 0444: $secret_file"
 done
 
 access_file=${PRAXIS_ACCESS_PASSWORD_FILE:-$script_dir/secrets/access-password.txt}

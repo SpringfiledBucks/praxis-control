@@ -6,6 +6,8 @@ cloud_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
 compose_file="$cloud_dir/compose.yml"
 dockerfile="$cloud_dir/Dockerfile"
 backup_script="$cloud_dir/backup.sh"
+preflight_script="$cloud_dir/preflight.sh"
+readme="$cloud_dir/README.md"
 nginx_template="$cloud_dir/nginx/praxis-control.conf.template"
 
 require_text() {
@@ -40,6 +42,9 @@ require_text "$dockerfile" 'USER node'
 require_text "$backup_script" 'pg_dump -h 127.0.0.1 -U praxis_control -d praxis_control -Fc --no-owner --no-privileges'
 require_text "$backup_script" 'pg_restore --list'
 require_text "$backup_script" 'refusing to overwrite'
+require_text "$preflight_script" 'file-backed Compose secret must have mode 0444'
+require_text "$preflight_script" 'secret directory must have mode 0700'
+require_text "$readme" 'chmod 0444 secrets/*.txt'
 require_text "$nginx_template" 'proxy_pass http://127.0.0.1:@@UPSTREAM_PORT@@;'
 require_text "$nginx_template" 'proxy_set_header X-Forwarded-For $remote_addr;'
 require_text "$nginx_template" 'proxy_set_header Tailscale-User-Login "";'

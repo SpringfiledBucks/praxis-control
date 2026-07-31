@@ -31,9 +31,18 @@ openssl rand -hex 32 >secrets/database-admin-password.txt
 openssl rand -hex 32 >secrets/database-app-password.txt
 openssl rand -base64 24 >secrets/access-password.txt
 openssl rand -hex 32 >secrets/session-secret.txt
-chmod 0600 secrets/*.txt
+chmod 0444 secrets/*.txt
 sh preflight.sh
 ```
+
+The `secrets` directory must remain `0700`. Compose file-backed secrets retain
+their host file mode when bind-mounted. PostgreSQL initialization and the
+application run as different non-root users, so the files must be `0444` for
+both containers to read them; the private parent directory prevents other host
+users from traversing to those files, and Compose mounts each file read-only.
+To rotate a secret, temporarily make only that source file owner-writable,
+replace its content without exposing it in shell output, restore mode `0444`,
+and rerun the preflight before recreating services.
 
 The default image tags make local evaluation reproducible at the configuration
 level but are mutable registry references. Before production promotion, set
