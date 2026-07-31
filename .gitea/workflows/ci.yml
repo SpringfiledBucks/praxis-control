@@ -36,6 +36,10 @@ jobs:
           sh infra/cloud/tests/preflight.sh
       - name: Validate Git mirror shell entrypoints
         run: bash -n infra/git-mirror/github-mirror-sync.sh && sh -n infra/git-mirror/post-receive clients/linux/package-release.sh
+      - name: Validate OCI publish contract
+        run: |
+          sh -n infra/oci/publish.sh infra/oci/tests/publish.sh
+          sh infra/oci/tests/publish.sh
 
   linux-gui-smoke:
     runs-on: ubuntu-latest
@@ -109,3 +113,33 @@ jobs:
           git checkout --detach FETCH_HEAD
       - run: npm ci
       - run: npm run test:postgres
+
+  oci-image:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs:
+      - verify
+      - linux-gui-smoke
+      - postgres-contract
+    runs-on: linux
+    timeout-minutes: 30
+    env:
+      GITEA_INTERNAL_URL: http://127.0.0.1:3000
+    steps:
+      - name: Checkout authoritative commit
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          git init .
+          git remote add origin "$GITEA_INTERNAL_URL/${{ github.repository }}.git"
+          git -c http.extraheader="Authorization: token $GITEA_TOKEN" fetch --no-tags --depth=1 origin "$TARGET_SHA"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+      - name: Publish immutable OCI image
+        id: publish
+        env:
+          OCI_GITEA_SERVER_URL: http://127.0.0.1:3000
+          OCI_REPOSITORY: ${{ github.repository }}
+          OCI_COMMIT_SHA: ${{ github.sha }}
+          OCI_REGISTRY_TOKEN: ${{ secrets.OCI_REGISTRY_TOKEN }}
+        run: sh infra/oci/publish.sh

@@ -1,4 +1,5 @@
-FROM node:24-bookworm-slim AS build
+ARG NODE_BASE_IMAGE=node:24-bookworm-slim
+FROM ${NODE_BASE_IMAGE} AS build
 
 WORKDIR /build
 COPY package.json package-lock.json tsconfig.json ./
@@ -10,7 +11,7 @@ COPY public ./public
 RUN npm run build \
     && npm prune --omit=dev
 
-FROM node:24-bookworm-slim
+FROM ${NODE_BASE_IMAGE}
 
 ENV NODE_ENV=production
 WORKDIR /app

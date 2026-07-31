@@ -1,0 +1,5 @@
+# Source references are human-readable; CI must also match the loaded image ID.
+NODE_BASE_REF=node:24-bookworm-slim
+NODE_BASE_PLATFORM=linux/amd64
+NODE_BASE_PLATFORM_DIGEST=sha256:a09aabc645e86e81e23dab78e0c0f2eaa233cab4277c7188232181a1a8bd5d39
+NODE_BASE_LOCAL_ID=sha256:c825877c1c5a39d12235596e2c89f3892618ac44e99d630660a75837fca8a02f
