@@ -18,6 +18,6 @@
 
 代码测试覆盖清单结构、静态缓存白名单、禁止 API 缓存、只读动作和摘要计算。Windows 小组件仍须在可信 HTTPS 公共测试入口上完成 PWA 安装、Adaptive Card 尺寸、登录失效、恢复、深链、明暗主题、键盘/屏幕阅读器和 Microsoft Store/PWABuilder 打包验证。
 
-本地证据：`npm run typecheck`、`npm run build`、完整 `npm test`（48 passed，3 skipped）、Linux 客户端合同、JavaScript 语法和两份 JSON 解析均通过；权威 Gitea CI 结果待本批提交后补记。
+本地证据：`npm run typecheck`、`npm run build`、完整 `npm test`（48 passed，3 skipped）、Linux 客户端合同、JavaScript 语法和两份 JSON 解析均通过；Gitea Actions run 95 的 `verify`、`linux-gui-smoke`、`postgres-contract` 全部成功。
 
 整个流程不得要求关闭 Defender、SmartScreen、防火墙或第三方安全软件，也不得要求添加排除项。被安全产品拦截时必须安全失败并从签名、来源、哈希和最小诊断证据处理。
