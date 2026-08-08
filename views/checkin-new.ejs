@@ -77,6 +77,9 @@
       <button class="button secondary full" type="button" id="analyze-button">分析当前行动</button>
       <button class="button primary full" type="submit" id="save-button">保存正式决策</button>
       <small>保存后会记录输入、规则版本、分析输出和哈希审计事件。</small>
+      <% if (locals.llmAvailable) { %>
+      <p style="margin-top:18px;padding-top:17px;border-top:1px solid rgba(255,255,255,.12);font-size:13px;color:#a9d4bd;line-height:1.5">💡 不确定写得好不好？<a href="/advisory" style="color:#d1f0df;font-weight:700">去 AI 顾问</a>让模型帮你检查：遗漏的假设、未标明的风险和可改进的措辞。</p>
+      <% } %>
     </div>
   </aside>
 </form>
