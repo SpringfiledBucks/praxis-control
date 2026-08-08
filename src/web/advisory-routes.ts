@@ -84,8 +84,12 @@ export function createAdvisoryRoutes(
 
   const listPending: RequestHandler = async (_req, res, next) => {
     try {
-      const tasks = await taskService.listPending();
-      res.json({ status: 'ok', tasks });
+      const pending = await taskService.listPending();
+      const recent = await taskService.listRecent(10);
+      // Merge: pending first, then recent non-pending, deduplicate
+      const ids = new Set(pending.map(t => t.id));
+      const extra = recent.filter(t => !ids.has(t.id));
+      res.json({ status: 'ok', tasks: [...pending, ...extra] });
     } catch (error) { next(error); }
   };
 

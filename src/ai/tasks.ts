@@ -133,7 +133,8 @@ export class AdvisoryTaskService {
       }
 
       if (result.status === 'failed') {
-        await updateTaskStatus(client, taskId, 'failed', { error_code: result.error.code, timing_ms: timingMs });
+        const errorMsg = result.error.message ? `${result.error.code}: ${result.error.message.slice(0, 500)}` : result.error.code;
+        await updateTaskStatus(client, taskId, 'failed', { error_code: errorMsg, timing_ms: timingMs });
         await appendAuditEvent(client, {
           aggregateType: 'advisory_task',
           aggregateId: taskId,
