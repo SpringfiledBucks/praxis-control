@@ -24,9 +24,9 @@
     <section class="form-section">
       <div class="section-number">02</div>
       <div class="section-content"><h2>目标、矛盾与瓶颈</h2>
-        <label>当前阶段目标<textarea name="stageGoal" required placeholder="例：连续四周建立可持续的实践—反馈闭环。不确定可填"暂不明确""><%= latest?.stage_goal || '' %></textarea></label>
-        <label>当前主要矛盾<textarea name="mainContradiction" required placeholder="什么和什么在冲突？例：故障持续出现 vs 运维人力不足。不确定可填"暂不明确""><%= latest?.main_contradiction || '' %></textarea></label>
-        <label>当前瓶颈<textarea name="bottleneck" required placeholder="只改善一个环节就能带动全局？例：单日最多处理3台。不确定可填"暂不明确""><%= latest?.bottleneck || '' %></textarea></label>
+        <label>当前阶段目标<textarea name="stageGoal" required placeholder="例：连续四周建立可持续的实践反馈闭环。不确定可填：暂不明确"><%= latest?.stage_goal || '' %></textarea></label>
+        <label>当前主要矛盾<textarea name="mainContradiction" required placeholder="什么和什么在冲突？例：故障持续出现 vs 运维人力不足。不确定可填：暂不明确"><%= latest?.main_contradiction || '' %></textarea></label>
+        <label>当前瓶颈<textarea name="bottleneck" required placeholder="只改善一个环节就能带动全局？例：单日最多处理3台。不确定可填：暂不明确"><%= latest?.bottleneck || '' %></textarea></label>
       </div>
     </section>
 
@@ -34,13 +34,13 @@
       <div class="section-number">03</div>
       <div class="section-content"><h2>一个主要行动</h2>
         <label>关联项目<select name="projectId"><option value="">不关联项目</option><% activeProjects.forEach((project) => { %><option value="<%= project.id %>"><%= project.title %></option><% }) %></select><small>只有活动或维护中的项目可以接收新决策；关联后会自动进入关系图谱。</small></label>
-        <label>今天推进什么<textarea name="mainAction" required placeholder="动作 + 对象"><%= latest?.main_action || '' %></textarea></label>
-        <label>最小可交付结果<textarea name="deliverable" required placeholder="外部可观察、可验收的结果"><%= latest?.deliverable || '' %></textarea></label>
+        <label>今天推进什么<textarea name="mainAction" required placeholder="动作+对象。例：完成3台RH2288H V3数据盘更换。不确定可填：待确认"><%= latest?.main_action || '' %></textarea></label>
+        <label>最小可交付结果<textarea name="deliverable" required placeholder="做完后能观察到什么？例：3台换件完成，阵列恢复确认。不确定可填：待确认"><%= latest?.deliverable || '' %></textarea></label>
         <div class="field-grid two">
           <label>预计投入分钟<input type="number" name="estimatedMinutes" min="1" max="1440" value="90" required></label>
           <label>当前核心在制品<input type="text" value="<%= activeWip %> / <%= wipLimit %>" readonly><input type="hidden" name="activeWip" value="<%= activeWip %>"><input type="hidden" name="wipLimit" value="<%= wipLimit %>"></label>
         </div>
-        <label>停止条件<textarea name="stopCondition" required placeholder="出现什么情况就停止、缩小或改为调查？"></textarea></label>
+        <label>停止条件<textarea name="stopCondition" required placeholder="出现什么情况就停？例：阵列卡故障则暂停升级工单。不确定可填：暂无"></textarea></label>
         <label>今天明确不做<textarea name="explicitNotDo" placeholder="防止范围膨胀"></textarea></label>
         <label class="check"><input type="checkbox" name="opensNewCoreProject"> 这会新增一个核心项目</label>
       </div>
