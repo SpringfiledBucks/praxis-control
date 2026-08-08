@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { advisoryRequestSchema } from '../ai/contracts.js';
@@ -9,7 +10,7 @@ const submitBodySchema = z.object({
   useCase: z.enum(['checkin_structure', 'weekly_review_draft', 'evidence_relations', 'rule_explanation']),
   recordIds: z.array(z.string()).min(1).max(20),
   userInstruction: z.string().max(2000).optional(),
-  records: z.array(z.record(z.string(), z.unknown())).min(1),
+  records: z.array(z.record(z.string(), z.unknown())).default([]),
 });
 
 const decisionBodySchema = z.object({
@@ -41,7 +42,15 @@ export function createAdvisoryRoutes(
         locale: 'zh-CN',
       });
 
-      const context = prepareAdvisoryContext(request, body.records);
+      const context = body.records.length > 0
+        ? prepareAdvisoryContext(request, body.records)
+        : {
+            schemaVersion: 1 as const,
+            request,
+            records: [],
+            audit: { recordIds: request.recordIds, recordTypes: [], fieldNames: [], characterCount: 0 },
+            digest: createHash('sha256').update(JSON.stringify({ schemaVersion: 1, request, records: [] }), 'utf8').digest('hex'),
+          };
       const taskId = await taskService.enqueue(request, context.digest);
 
       // Process asynchronously — don't block the response
