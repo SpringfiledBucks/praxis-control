@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const sceneDescriptions = {
     checkin_structure: '<p style="margin:0"><strong>顾问将分析</strong>：项目标题、阶段目标、瓶颈、停止条件 → <strong>输出</strong>：主行动、交付物、停止条件建议，每条含依据和不确定项。适用于"今天该做什么"的结构化。</p>',
-    weekly_review_draft: '<p style="margin:0"><strong>顾问将分析</strong>：本周 checkin 记录和上周复盘 → <strong>输出</strong>：进展摘要、偏差归因（决策/执行/环境/随机性）、瓶颈转移、下周建议。不覆盖用户手动修改的 reported 快照。</p>',
-    evidence_relations: '<p style="margin:0"><strong>顾问将分析</strong>：你选中的证据记录 → <strong>输出</strong>：关系类型（支持/矛盾/补充/前置条件）、强度（strong/weak/conditional）、不确定项。</p>',
+    weekly_review_draft: '<p style="margin:0"><strong>顾问将分析</strong>：本周决策记录和上周复盘 → <strong>输出</strong>：进展摘要、偏差归因（决策/执行/环境/随机性）、瓶颈转移、下周建议。不会覆盖你手动修改的报告统计。</p>',
+    evidence_relations: '<p style="margin:0"><strong>顾问将分析</strong>：你选中的证据记录 → <strong>输出</strong>：关系类型（支持/矛盾/补充/前置条件）、强度（强 / 弱 / 条件性）、不确定项。</p>',
     rule_explanation: '<p style="margin:0"><strong>顾问将分析</strong>：已触发规则的输入和输出摘要 → <strong>输出</strong>：输入→规则→输出→为什么，不重新评估规则结果。</p>',
   };
 
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (t.error_code) html += '<p class="warning-box">错误: ' + escapeHtml(t.error_code) + '</p>';
       if (t.output && t.output.suggestions) {
         html += '<div class="detail-list" style="margin-top:16px">' + t.output.suggestions.map(function (s, i) {
-          return '<div><dt>建议 ' + (i + 1) + ' · ' + escapeHtml(s.targetField) + ' · <span class="status ' + (s.confidence === 'high' ? 'ready' : s.confidence === 'medium' ? 'caution' : 'blocked') + '">' + escapeHtml(s.confidence) + '</span></dt><dd><strong>' + escapeHtml(s.proposedValue) + '</strong></dd><dd style="color:var(--muted);font-size:13px;margin-top:4px">' + escapeHtml(s.rationale) + '</dd>'
+          return '<div><dt>建议 ' + (i + 1) + ' · ' + escapeHtml(s.targetField) + ' · <span class="status ' + (s.confidence === 'high' ? 'ready' : s.confidence === 'medium' ? 'caution' : 'blocked') + '">' + ({ high: '高', medium: '中', low: '低' }[s.confidence] || escapeHtml(s.confidence)) + '</span></dt><dd><strong>' + escapeHtml(s.proposedValue) + '</strong></dd><dd style="color:var(--muted);font-size:13px;margin-top:4px">' + escapeHtml(s.rationale) + '</dd>'
             + (s.uncertainties && s.uncertainties.length ? '<dd style="color:var(--amber);font-size:12px;margin-top:4px">不确定: ' + s.uncertainties.map(escapeHtml).join('；') + '</dd>' : '')
             + '</div>';
         }).join('') + '</div>';

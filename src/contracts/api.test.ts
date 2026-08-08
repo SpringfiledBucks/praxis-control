@@ -64,7 +64,7 @@ describe('shared API contract', () => {
     expect(widgetSummaryResponseSchema.parse({
       generatedAt: new Date().toISOString(), today: '2026-07-31', hasTodayPlan: false, mainAction: null,
       capacityText: '尚未填写今日可支配时间', awaitingReview: 0, reviewText: '待复盘 0 项',
-      activeWip: 0, wipLimit: 3, wipText: '核心 WIP 0 / 3', serviceStatus: 'ready',
+      activeWip: 0, wipLimit: 3, wipText: '核心在制品 0 / 3', serviceStatus: 'ready',
     })).toBeTruthy();
 
     expect(dailyAnalysisResponseSchema.parse(analyzeDaily({

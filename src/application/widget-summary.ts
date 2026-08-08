@@ -50,7 +50,7 @@ export async function loadWidgetSummary(database: Database, rulesetVersion: stri
     reviewText: `待复盘 ${dashboard.awaitingReview} 项`,
     activeWip: dashboard.activeWip,
     wipLimit: dashboard.wipLimit,
-    wipText: `核心 WIP ${dashboard.activeWip} / ${dashboard.wipLimit}`,
+    wipText: `核心在制品 ${dashboard.activeWip} / ${dashboard.wipLimit}`,
     serviceStatus: 'ready',
   };
 }

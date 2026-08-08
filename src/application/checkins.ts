@@ -8,6 +8,16 @@ import { formatDateOnly } from '../platform/dates.js';
 import { BusinessRuleError, ResourceNotFoundError } from './errors.js';
 import { loadPortfolioContext } from './portfolio.js';
 
+const lifecycleStatusLabels: Record<DecisionLifecycleStatus, string> = {
+  planned: '已计划', executing: '执行中', awaiting_review: '待复盘', reviewed: '已闭环', cancelled: '已取消',
+};
+const projectStatusLabels: Record<string, string> = {
+  idea: '想法', validating: '验证中', planned: '已计划', active: '进行中', maintaining: '维护中',
+  paused: '已暂停', retiring: '退出中', retired: '已退出',
+};
+const lifecycleStatusLabel = (value: DecisionLifecycleStatus): string => lifecycleStatusLabels[value] ?? value;
+const projectStatusLabel = (value: string): string => projectStatusLabels[value] ?? value;
+
 export type DailyRecord = DailyInput & {
   id: string;
   analysis: DailyAnalysis;
@@ -178,7 +188,7 @@ export class CheckinService {
       if (!canTransitionDecision(previousStatus, status)) {
         throw new BusinessRuleError(
           'INVALID_DECISION_TRANSITION',
-          `决策状态不能从 ${previousStatus} 直接变更为 ${status}。`,
+          `决策状态不能从 ${lifecycleStatusLabel(previousStatus)} 直接变更为 ${lifecycleStatusLabel(status)}。`,
         );
       }
       await client.query(
@@ -243,6 +253,6 @@ async function assertProjectAcceptsDecision(client: Queryable, projectId: string
   const status = project.rows[0]?.status;
   if (!status) throw new ResourceNotFoundError('PROJECT_NOT_FOUND', '关联项目不存在。');
   if (status !== 'active' && status !== 'maintaining') {
-    throw new BusinessRuleError('PROJECT_NOT_ACCEPTING_DECISIONS', `项目当前状态为 ${status}，不能关联新的日常决策。`);
+    throw new BusinessRuleError('PROJECT_NOT_ACCEPTING_DECISIONS', `项目当前状态为 ${projectStatusLabel(status)}，不能关联新的日常决策。`);
   }
 }

@@ -5,6 +5,12 @@ import { withTransaction, type Database } from '../infrastructure/db.js';
 import { BusinessRuleError, ResourceNotFoundError } from './errors.js';
 import { assertWipCapacity, loadPortfolioContext, type PortfolioContext } from './portfolio.js';
 
+const projectStatusLabels: Record<ProjectStatus, string> = {
+  idea: '想法', validating: '验证中', planned: '已计划', active: '进行中', maintaining: '维护中',
+  paused: '已暂停', retiring: '退出中', retired: '已退出',
+};
+const projectStatusLabel = (value: ProjectStatus): string => projectStatusLabels[value] ?? value;
+
 export type ProjectRecord = Record<string, unknown> & {
   id: string;
   status: ProjectStatus;
@@ -92,7 +98,7 @@ export async function changeProjectStatus(
     if (!canTransitionProject(previousStatus, status)) {
       throw new BusinessRuleError(
         'INVALID_PROJECT_TRANSITION',
-        `项目状态不能从 ${previousStatus} 直接变更为 ${status}。`,
+        `项目状态不能从 ${projectStatusLabel(previousStatus)} 直接变更为 ${projectStatusLabel(status)}。`,
       );
     }
     if (!isCoreWipStatus(previousStatus)) assertWipCapacity(portfolio, status);

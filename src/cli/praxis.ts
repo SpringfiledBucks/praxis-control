@@ -153,7 +153,7 @@ async function tui(): Promise<void> {
       console.log('PRAXIS CONTROL · 实践控制台');
       console.log(`服务 ${state.url} · ${config.databaseMode}`);
       console.log('');
-      console.log(`核心 WIP       ${data.activeWip ?? 0} / ${data.wipLimit ?? 3}`);
+      console.log(`核心在制品    ${data.activeWip ?? 0} / ${data.wipLimit ?? 3}`);
       console.log(`待结果复盘     ${data.awaitingReview ?? 0}`);
       console.log(`近 7 日已闭环  ${data.reviewedLast7Days ?? 0}`);
       if (data.latestCheckin) console.log(`最近行动       ${String(data.latestCheckin.main_action ?? '')}`);

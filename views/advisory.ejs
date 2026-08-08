@@ -2,13 +2,13 @@
 
 <% if (!locals.llmAvailable) { %>
 <section class="warning-box" style="margin-bottom:24px;max-width:860px">
-  <strong>LLM 顾问未启用</strong> — 当前 <code>AI_MODE=disabled</code>，所有确定性功能正常，顾问不可用。接入只需在 <code>.env</code> 中配置三行：<code>AI_MODE=http</code>、<code>AI_API_BASE_URL</code>、<code>AI_API_KEY_FILE</code>，重启后即生效。
+  <strong>AI 顾问未启用</strong> — 当前 <code>AI_MODE=disabled</code>，所有确定性功能正常，顾问不可用。接入只需在 <code>.env</code> 中配置三行：<code>AI_MODE=http</code>、<code>AI_API_BASE_URL</code>、<code>AI_API_KEY_FILE</code>，重启后即生效。
 </section>
 <% } %>
 
 <section class="page-heading">
   <div>
-    <p class="eyebrow">LLM Advisory</p>
+    <p class="eyebrow">AI 顾问</p>
     <h1>模型提建议，你来下判断。</h1>
     <p class="lede">顾问为每条建议提供来源、理由和不确定项。接受、修改或拒绝由你决定——不自动写入正式记录。</p>
   </div>
@@ -79,7 +79,7 @@
       <div id="pending-list">
         <p class="loading-text">加载中…</p>
       </div>
-      <small style="display:block;margin-top:12px;color:#aebbb4;line-height:1.5">建议状态: pending_user → 你决定 → 接受 / 修改后接受 / 拒绝</small>
+      <small style="display:block;margin-top:12px;color:#aebbb4;line-height:1.5">建议状态：待处理 → 你决定 → 接受 / 修改后接受 / 拒绝</small>
     </div>
 
     <div class="panel top-gap" id="task-detail" style="display:none">

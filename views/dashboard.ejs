@@ -1,4 +1,5 @@
 <%- include('partials/head', { title }) %>
+<% const projectKindLabels = { breakthrough: '突破', build: '建设', maintain: '维护', explore: '探索' }; %>
 <section class="hero">
   <div>
     <p class="eyebrow">今日 · 调查现实，再行动</p>
@@ -29,11 +30,11 @@
   </article>
 
   <article class="panel">
-    <div class="panel-heading"><div><p class="eyebrow">WIP ≤ 3</p><h2>核心项目</h2></div><a href="/projects">管理</a></div>
+    <div class="panel-heading"><div><p class="eyebrow">在制品 ≤ 3</p><h2>核心项目</h2></div><a href="/projects">管理</a></div>
     <% if (data.activeProjects.length) { %>
       <ul class="clean-list">
         <% data.activeProjects.forEach((project) => { %>
-          <li><div><strong><%= project.title %></strong><small><%= project.kind %></small></div><p><%= project.current_bottleneck || '尚未记录瓶颈' %></p></li>
+          <li><div><strong><%= project.title %></strong><small><%= projectKindLabels[project.kind] || project.kind %></small></div><p><%= project.current_bottleneck || '尚未记录瓶颈' %></p></li>
         <% }) %>
       </ul>
     <% } else { %>
