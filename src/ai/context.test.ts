@@ -69,7 +69,7 @@ describe('advisory context preparation', () => {
       { useCase: 'weekly_review_draft', recordIds: [firstId] },
       [checkins[0]],
     );
-    await expect(createModelGateway('disabled').advise(context)).resolves.toEqual({
+    await expect((await createModelGateway('disabled')).advise(context)).resolves.toEqual({
       status: 'disabled',
       reason: 'not_configured',
       contextDigest: context.digest,

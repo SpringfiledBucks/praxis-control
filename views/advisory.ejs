@@ -1,0 +1,102 @@
+<%- include('partials/head', { title: 'LLM 顾问' }) %>
+
+<section class="page-heading">
+  <p class="eyebrow">AI 辅助分析</p>
+  <h1>模型建议，你来决定。</h1>
+  <p class="lede">顾问只生成结构化建议和依据，所有决定由你确认、修改或拒绝。建议不自动写入正式记录。</p>
+</section>
+
+<section aria-label="建议提交">
+  <form id="advisory-form" class="panel">
+    <div class="panel-heading"><h2>请求建议</h2></div>
+    <div class="form-section">
+      <label>用例
+        <select name="useCase" id="useCase" required>
+          <option value="checkin_structure">日常结构化</option>
+          <option value="weekly_review_draft">周复盘草稿</option>
+          <option value="evidence_relations">证据关系</option>
+          <option value="rule_explanation">规则解释</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-section">
+      <label>补充说明（可选）
+        <textarea name="userInstruction" maxlength="2000" rows="2" placeholder="例如：重点关注数据盘更换进度"></textarea>
+      </label>
+    </div>
+    <div class="form-section">
+      <label>关联记录 ID（逗号分隔）
+        <input type="text" name="recordIds" required placeholder="uuid1, uuid2" />
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="button primary">提交顾问请求</button>
+      <small id="submit-status"></small>
+    </div>
+  </form>
+</section>
+
+<section aria-label="待处理建议" class="panel" style="margin-top: 2rem;">
+  <div class="panel-heading"><h2>待处理</h2></div>
+  <div id="pending-list"><p class="empty">加载中…</p></div>
+</section>
+
+<script>
+const form = document.getElementById('advisory-form');
+const status = document.getElementById('submit-status');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  status.textContent = '提交中…';
+  try {
+    const recordIds = form.recordIds.value.split(',').map(s => s.trim()).filter(Boolean);
+    const res = await fetch('/api/advisory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '<%= csrfToken %>' },
+      body: JSON.stringify({
+        useCase: form.useCase.value,
+        recordIds,
+        userInstruction: form.userInstruction.value || undefined,
+        records: [],
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      status.textContent = '已提交，任务ID: ' + data.taskId;
+      loadPending();
+    } else {
+      status.textContent = '错误: ' + data.message;
+    }
+  } catch (err) {
+    status.textContent = '网络错误';
+  }
+});
+
+async function loadPending() {
+  try {
+    const res = await fetch('/api/advisory/pending');
+    const data = await res.json();
+    const container = document.getElementById('pending-list');
+    if (!data.tasks || data.tasks.length === 0) {
+      container.innerHTML = '<p class="empty">没有待处理的建议。</p>';
+      return;
+    }
+    container.innerHTML = data.tasks.map(t => `
+      <div class="task-card" style="padding:1rem;margin:0.5rem 0;border:1px solid var(--border);border-radius:4px">
+        <span class="status">${t.status}</span>
+        <strong>${t.use_case}</strong>
+        <small>${new Date(t.created_at).toLocaleString('zh-CN')}</small>
+        <div style="margin-top:0.5rem">
+          <a href="/advisory/${t.id}">查看详情 →</a>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    document.getElementById('pending-list').innerHTML = '<p class="empty">加载失败</p>';
+  }
+}
+
+loadPending();
+</script>
+
+<%- include('partials/foot') %>

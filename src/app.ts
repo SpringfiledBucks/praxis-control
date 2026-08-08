@@ -7,9 +7,10 @@ import type { AppConfig } from './config.js';
 import { BusinessRuleError, ResourceNotFoundError } from './application/errors.js';
 import type { Database } from './infrastructure/db.js';
 import { LoginRateLimiter, PasswordAccess } from './security/password-access.js';
+import type { ModelGateway } from './ai/gateway.js';
 import { createRouter, type SystemControl } from './web/routes.js';
 
-export function createApp(database: Database, config: AppConfig, system?: SystemControl): Express {
+export function createApp(database: Database, config: AppConfig, system?: SystemControl, gateway?: ModelGateway): Express {
   if (config.accessMode === 'password' && (!system || !config.accessPassword || !config.sessionSecret)) {
     throw new Error('密码访问模式必须提供访问密钥、会话密钥和系统令牌');
   }
@@ -23,6 +24,7 @@ export function createApp(database: Database, config: AppConfig, system?: System
   app.locals.shutdownToken = config.accessMode === 'local' ? system?.shutdownToken ?? '' : '';
   app.locals.accessMode = config.accessMode;
   app.locals.authenticated = config.accessMode === 'local';
+  app.locals.llmAvailable = gateway !== undefined;
   app.locals.formatDate = (value: unknown) => new Date(String(value)).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
   app.locals.json = (value: unknown) => JSON.stringify(value, null, 2);
   app.locals.lifecycleLabel = (value: string) => ({
@@ -113,7 +115,7 @@ export function createApp(database: Database, config: AppConfig, system?: System
       return res.redirect(303, '/login');
     });
   }
-  app.use(createRouter(database, config.rulesetVersion, system));
+  app.use(createRouter(database, config.rulesetVersion, system, gateway));
 
   app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : '未知错误';

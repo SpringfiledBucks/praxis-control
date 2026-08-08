@@ -6,6 +6,7 @@
     <p class="lede">日常只运行最小决策内核；高风险、协作与重大选择按条件展开，不把十四个模块变成十四张表。</p>
   </div>
   <a class="button primary" href="/checkins/new">开始今日决策</a>
+  <% if (locals.llmAvailable) { %><a class="button" href="/advisory" style="margin-left:1rem">AI 顾问</a><% } %>
 </section>
 
 <section class="metric-grid" aria-label="系统状态">

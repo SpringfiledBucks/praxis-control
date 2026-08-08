@@ -6,6 +6,7 @@ import { ensureSeedData } from './application/bootstrap.js';
 import { loadConfig } from './config.js';
 import { createDatabase, type Database } from './infrastructure/db.js';
 import { runMigrations } from './infrastructure/migrations.js';
+import { createModelGateway, type ModelGateway } from './ai/gateway.js';
 import {
   acquireRuntimeLock,
   getReachableRuntimeState,
@@ -27,6 +28,19 @@ try {
   if (config.runMigrations) await runMigrations(database);
   await ensureSeedData(database, config.rulesetVersion);
 
+  let gateway: ModelGateway | undefined;
+  if (config.aiMode === 'http' && config.aiApiBaseUrl && config.aiModel && config.aiApiKey) {
+    gateway = await createModelGateway('http', {
+      baseUrl: config.aiApiBaseUrl,
+      model: config.aiModel,
+      apiKey: config.aiApiKey,
+      timeoutMs: config.aiTimeoutMs,
+      maxRetries: config.aiMaxRetries,
+    });
+  } else {
+    gateway = await createModelGateway('disabled');
+  }
+
   const csrfToken = randomBytes(32).toString('hex');
   const shutdownToken = randomBytes(32).toString('hex');
   const apiToken = randomBytes(32).toString('hex');
@@ -39,7 +53,7 @@ try {
     apiToken,
     requestShutdown: () => resolveShutdown?.(),
     ...(database.backup ? { requestBackup: () => database!.backup!(config.backupDir) } : {}),
-  });
+  }, gateway);
   server = createServer(app);
 
   await new Promise<void>((resolve, reject) => {

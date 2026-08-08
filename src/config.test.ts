@@ -22,8 +22,9 @@ describe('loadConfig', () => {
     expect(config.logDir).toBe(path.join(config.dataDir, 'logs'));
   });
 
-  it('fails closed when an unimplemented model gateway is requested', () => {
-    expect(() => loadConfig({ AI_MODE: 'http' })).toThrow();
+  it('fails closed when http mode lacks required config', () => {
+    expect(() => loadConfig({ AI_MODE: 'http' })).toThrow('AI_MODE=http 时必须设置');
+    expect(loadConfig({ AI_MODE: 'disabled' }).aiMode).toBe('disabled');
   });
 
   it('honors an explicit fixed port and rejects automatic ports for remote profiles', () => {

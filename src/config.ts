@@ -25,7 +25,12 @@ const envSchema = z.object({
   SESSION_SECRET_FILE: z.string().min(1).optional(),
   SESSION_COOKIE_SECURE: z.enum(['true', 'false']).default('true'),
   RUN_MIGRATIONS: z.enum(['true', 'false']).default('true'),
-  AI_MODE: z.literal('disabled').default('disabled'),
+  AI_MODE: z.enum(['disabled', 'http']).default('disabled'),
+  AI_API_BASE_URL: z.string().min(1).optional(),
+  AI_MODEL: z.string().min(1).optional(),
+  AI_API_KEY_FILE: z.string().min(1).optional(),
+  AI_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120000).default(30000),
+  AI_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
   RULESET_VERSION: z.string().default('2026.07.28-mvp1'),
 });
 
@@ -47,7 +52,12 @@ export type AppConfig = {
   sessionSecret?: string;
   sessionCookieSecure: boolean;
   runMigrations: boolean;
-  aiMode: 'disabled';
+  aiMode: 'disabled' | 'http';
+  aiApiBaseUrl?: string;
+  aiModel?: string;
+  aiApiKey?: string;
+  aiTimeoutMs: number;
+  aiMaxRetries: number;
   rulesetVersion: string;
 };
 
@@ -100,6 +110,13 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   if (env.NODE_ENV === 'production' && env.ACCESS_MODE === 'password' && env.SESSION_COOKIE_SECURE !== 'true') {
     throw new Error('生产密码模式必须启用 SESSION_COOKIE_SECURE=true');
   }
+  let aiApiKey: string | undefined;
+  if (env.AI_MODE === 'http') {
+    if (!env.AI_API_BASE_URL || !env.AI_MODEL || !env.AI_API_KEY_FILE) {
+      throw new Error('AI_MODE=http 时必须设置 AI_API_BASE_URL, AI_MODEL 和 AI_API_KEY_FILE');
+    }
+    aiApiKey = readSingleLineSecret(env.AI_API_KEY_FILE, 'AI_API_KEY_FILE');
+  }
   const directories = resolveAppDirectories(source);
   return {
     nodeEnv: env.NODE_ENV,
@@ -120,6 +137,11 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     sessionCookieSecure: env.SESSION_COOKIE_SECURE === 'true',
     runMigrations: env.RUN_MIGRATIONS === 'true',
     aiMode: env.AI_MODE,
+    ...(env.AI_API_BASE_URL ? { aiApiBaseUrl: env.AI_API_BASE_URL } : {}),
+    ...(env.AI_MODEL ? { aiModel: env.AI_MODEL } : {}),
+    ...(aiApiKey ? { aiApiKey } : {}),
+    aiTimeoutMs: env.AI_TIMEOUT_MS,
+    aiMaxRetries: env.AI_MAX_RETRIES,
     rulesetVersion: env.RULESET_VERSION,
   };
 }

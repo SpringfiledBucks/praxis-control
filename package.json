@@ -20,6 +20,7 @@
     "package:windows-portable": "powershell -NoProfile -ExecutionPolicy Bypass -File clients/windows/package-portable.ps1",
     "package:linux": "sh clients/linux/package-release.sh",
     "test:postgres": "vitest run src/infrastructure/postgres.integration.test.ts",
+    "test:eval": "vitest run src/ai/evaluation.test.ts",
     "test:watch": "vitest",
     "migrate": "tsx src/cli/migrate.ts",
     "seed": "tsx src/cli/seed.ts",

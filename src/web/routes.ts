@@ -11,6 +11,9 @@ import { verifyAuditChain } from '../infrastructure/audit.js';
 import { verifyMigrationState } from '../infrastructure/migrations.js';
 import { parseDailyBody } from './parsing.js';
 import type { Database } from '../infrastructure/db.js';
+import type { ModelGateway } from '../ai/gateway.js';
+import { AdvisoryTaskService } from '../ai/tasks.js';
+import { createAdvisoryRoutes } from './advisory-routes.js';
 import { API_VERSION } from '../contracts/api.js';
 import { openApiDocument } from '../contracts/openapi.js';
 import { projectStatuses } from '../domain/portfolio.js';
@@ -26,9 +29,14 @@ export type SystemControl = {
   requestBackup?: () => Promise<string>;
 };
 
-export function createRouter(database: Database, rulesetVersion: string, system?: SystemControl): Router {
+export function createRouter(database: Database, rulesetVersion: string, system?: SystemControl, gateway?: ModelGateway): Router {
   const router = Router();
   const checkins = new CheckinService(database, rulesetVersion);
+  const llmAvailable = gateway !== undefined;
+  const taskService = gateway ? new AdvisoryTaskService(database, gateway, rulesetVersion) : undefined as unknown as AdvisoryTaskService;
+  if (taskService) {
+    router.use('/api', createAdvisoryRoutes(database, taskService, rulesetVersion, llmAvailable));
+  }
 
   router.get('/', async (_req, res, next) => {
     try {
@@ -112,7 +120,7 @@ export function createRouter(database: Database, rulesetVersion: string, system?
         backup: Boolean(system?.requestBackup),
         safeShutdown: Boolean(system),
         widgetSummary: true,
-        llmAdvisory: false,
+        llmAdvisory: llmAvailable,
       },
     });
   });
@@ -200,6 +208,12 @@ export function createRouter(database: Database, rulesetVersion: string, system?
   router.get('/guide', (_req, res) => {
     res.render('guide', { title: '使用教程' });
   });
+
+  if (llmAvailable) {
+    router.get('/advisory', (_req, res) => {
+      res.render('advisory', { title: 'LLM 顾问' });
+    });
+  }
 
   router.post('/projects', async (req, res, next) => {
     try {
