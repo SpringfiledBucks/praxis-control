@@ -24,9 +24,9 @@
     <section class="form-section">
       <div class="section-number">02</div>
       <div class="section-content"><h2>目标、矛盾与瓶颈</h2>
-        <label>当前阶段目标<textarea name="stageGoal" required placeholder="例：连续四周建立可持续的实践—反馈闭环"><%= latest?.stage_goal || '' %></textarea></label>
-        <label>当前主要矛盾<textarea name="mainContradiction" required placeholder="目标状态与现实条件之间的主导关系"><%= latest?.main_contradiction || '' %></textarea></label>
-        <label>当前瓶颈<textarea name="bottleneck" required placeholder="如果只改善一个环节，哪个最能释放整体产出？"><%= latest?.bottleneck || '' %></textarea></label>
+        <label>当前阶段目标<textarea name="stageGoal" required placeholder="例：连续四周建立可持续的实践—反馈闭环。不确定可填"暂不明确""><%= latest?.stage_goal || '' %></textarea></label>
+        <label>当前主要矛盾<textarea name="mainContradiction" required placeholder="什么和什么在冲突？例：故障持续出现 vs 运维人力不足。不确定可填"暂不明确""><%= latest?.main_contradiction || '' %></textarea></label>
+        <label>当前瓶颈<textarea name="bottleneck" required placeholder="只改善一个环节就能带动全局？例：单日最多处理3台。不确定可填"暂不明确""><%= latest?.bottleneck || '' %></textarea></label>
       </div>
     </section>
 
