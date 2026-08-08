@@ -222,6 +222,39 @@ pre { max-height: 420px; overflow: auto; padding: 15px; border-radius: 10px; col
   .graph-legend { position: static; }
 }
 
+/* --- LLM Advisory --- */
+.advisory-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.advisory-main { min-width: 0; }
+.advisory-sidebar { position: sticky; top: 92px; }
+
+.use-case-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+.use-case-card { display: flex; flex-direction: column; gap: 6px; padding: 18px; border: 2px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .2s, background .2s; }
+.use-case-card:hover { border-color: #9cae9f; background: rgba(255,255,255,.5); }
+.use-case-card.selected { border-color: var(--green); background: var(--green-soft); }
+.uc-icon { font-size: 28px; }
+.use-case-card strong { font-size: 14px; color: var(--ink); }
+.use-case-card small { color: var(--muted); line-height: 1.45; }
+
+.submit-feedback { display: block; margin-top: 10px; text-align: center; font-size: 13px; }
+.submit-feedback.success { color: var(--green); }
+.submit-feedback.error { color: var(--red); }
+.submit-feedback code { font-size: 11px; color: var(--muted); background: var(--green-soft); padding: 2px 6px; border-radius: 4px; }
+
+.pending-task { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.1); cursor: pointer; transition: opacity .15s; }
+.pending-task:first-child { padding-top: 0; border-top: 0; }
+.pending-task:hover { opacity: .8; }
+.pt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.pt-header small { color: #aebbb4; font-size: 11px; }
+.pending-task strong { display: block; margin-bottom: 4px; color: #f8f4e9; font-size: 14px; }
+.pt-error { margin: 4px 0 0; color: #e8a89d; font-size: 12px; }
+.loading-text { color: #aebbb4; margin: 0; }
+
+@media (max-width: 900px) {
+  .advisory-layout { grid-template-columns: 1fr; }
+  .advisory-sidebar { position: static; }
+  .use-case-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 620px) {
   .shell { width: min(100% - 24px, 1160px); padding-top: 34px; }
   .site-header { padding: 12px; }

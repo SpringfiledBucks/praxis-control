@@ -1,53 +1,112 @@
-<%- include('partials/head', { title: 'LLM 顾问' }) %>
+<%- include('partials/head', { title: 'AI 顾问' }) %>
 
 <section class="page-heading">
-  <p class="eyebrow">AI 辅助分析</p>
-  <h1>模型建议，你来决定。</h1>
-  <p class="lede">顾问只生成结构化建议和依据，所有决定由你确认、修改或拒绝。建议不自动写入正式记录。</p>
+  <div>
+    <p class="eyebrow">LLM Advisory</p>
+    <h1>模型提建议，你来下判断。</h1>
+    <p class="lede">顾问为每条建议提供来源、理由和不确定项。所有决定权在你——接受、修改或拒绝，不自动写入任何正式记录。</p>
+  </div>
 </section>
 
-<section aria-label="建议提交">
-  <form id="advisory-form" class="panel">
-    <div class="panel-heading"><h2>请求建议</h2></div>
-    <div class="form-section">
-      <label>用例
-        <select name="useCase" id="useCase" required>
-          <option value="checkin_structure">日常结构化</option>
-          <option value="weekly_review_draft">周复盘草稿</option>
-          <option value="evidence_relations">证据关系</option>
-          <option value="rule_explanation">规则解释</option>
-        </select>
-      </label>
-    </div>
-    <div class="form-section">
-      <label>补充说明（可选）
-        <textarea name="userInstruction" maxlength="2000" rows="2" placeholder="例如：重点关注数据盘更换进度"></textarea>
-      </label>
-    </div>
-    <div class="form-section">
-      <label>关联记录 ID（逗号分隔）
-        <input type="text" name="recordIds" required placeholder="uuid1, uuid2" />
-      </label>
-    </div>
-    <div class="form-actions">
-      <button type="submit" class="button primary">提交顾问请求</button>
-      <small id="submit-status"></small>
-    </div>
-  </form>
-</section>
+<div class="advisory-layout">
+  <div class="advisory-main">
+    <form id="advisory-form" class="form-stack">
+      <section class="form-section">
+        <div class="section-number">01</div>
+        <div class="section-content">
+          <h2>选择场景</h2>
+          <p>顾问会按场景加载对应上下文，只读取你指定的记录。</p>
+          <div class="use-case-grid" id="useCaseGrid">
+            <% const cases = [
+              { id: 'checkin_structure', title: '日常结构化', desc: '从项目上下文提取候选行动、交付物和停止条件', icon: '📋' },
+              { id: 'weekly_review_draft', title: '周复盘草稿', desc: '根据本周记录生成进展摘要和下周建议', icon: '📊' },
+              { id: 'evidence_relations', title: '证据关系', desc: '分析证据记录之间的支持、矛盾或补充关系', icon: '🔗' },
+              { id: 'rule_explanation', title: '规则解释', desc: '解释已触发规则的输入、逻辑和输出', icon: '📐' },
+            ]; %>
+            <% cases.forEach((c) => { %>
+              <label class="use-case-card" data-case="<%= c.id %>">
+                <input type="radio" name="useCase" value="<%= c.id %>" <%= c.id === 'checkin_structure' ? 'checked' : '' %> hidden>
+                <span class="uc-icon"><%= c.icon %></span>
+                <strong><%= c.title %></strong>
+                <small><%= c.desc %></small>
+              </label>
+            <% }); %>
+          </div>
+        </div>
+      </section>
 
-<section aria-label="待处理建议" class="panel" style="margin-top: 2rem;">
-  <div class="panel-heading"><h2>待处理</h2></div>
-  <div id="pending-list"><p class="empty">加载中…</p></div>
-</section>
+      <section class="form-section">
+        <div class="section-number">02</div>
+        <div class="section-content">
+          <h2>关联记录</h2>
+          <p>输入需要顾问参考的记录 ID，多个以逗号分隔。</p>
+          <label>记录 ID
+            <input type="text" name="recordIds" required placeholder="00000000-0000-0000-0000-000000000001, 00000000-0000-0000-0000-000000000002" />
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-number">03</div>
+        <div class="section-content">
+          <h2>补充说明</h2>
+          <p>用自然语言告诉顾问你的关注点或特殊要求。</p>
+          <label>补充指令（可选）
+            <textarea name="userInstruction" maxlength="2000" rows="3" placeholder="例如：重点关注本周数据盘更换进度，忽略已闭环事项。或：帮我看看这几个证据之间有没有矛盾。"></textarea>
+            <small><span id="charCount">0</span> / 2000</small>
+          </label>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" class="button primary full">提交顾问请求</button>
+        <small id="submit-status" class="submit-feedback"></small>
+      </div>
+    </form>
+  </div>
+
+  <aside class="advisory-sidebar">
+    <div class="sticky-card">
+      <p class="eyebrow">待处理建议</p>
+      <div id="pending-list">
+        <p class="loading-text">加载中…</p>
+      </div>
+      <small style="display:block;margin-top:12px;color:#aebbb4;line-height:1.5">建议状态: pending_user → 待你决定 → 接受 / 修改后接受 / 拒绝</small>
+    </div>
+
+    <div class="panel top-gap" id="task-detail" style="display:none">
+      <div class="panel-heading"><h2>建议详情</h2><button class="button small secondary" onclick="document.getElementById('task-detail').style.display='none'">✕</button></div>
+      <div id="task-detail-content"></div>
+    </div>
+  </aside>
+</div>
 
 <script>
 const form = document.getElementById('advisory-form');
 const status = document.getElementById('submit-status');
+const useCaseGrid = document.getElementById('useCaseGrid');
+
+// Use case card selection
+useCaseGrid.querySelectorAll('.use-case-card').forEach(card => {
+  card.addEventListener('click', () => {
+    useCaseGrid.querySelectorAll('.use-case-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    card.querySelector('input').checked = true;
+  });
+});
+// Init selected state
+const checked = useCaseGrid.querySelector('input:checked');
+if (checked) checked.closest('.use-case-card').classList.add('selected');
+
+// Character counter
+const textarea = document.querySelector('textarea[name="userInstruction"]');
+const charCount = document.getElementById('charCount');
+textarea.addEventListener('input', () => { charCount.textContent = textarea.value.length; });
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   status.textContent = '提交中…';
+  status.className = 'submit-feedback';
   try {
     const recordIds = form.recordIds.value.split(',').map(s => s.trim()).filter(Boolean);
     const res = await fetch('/api/advisory', {
@@ -62,15 +121,26 @@ form.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (res.ok) {
-      status.textContent = '已提交，任务ID: ' + data.taskId;
-      loadPending();
+      status.innerHTML = '✓ 已提交 <code>' + data.taskId + '</code>';
+      status.className = 'submit-feedback success';
+      form.reset();
+      useCaseGrid.querySelectorAll('.use-case-card').forEach(c => c.classList.remove('selected'));
+      useCaseGrid.querySelector('.use-case-card').classList.add('selected');
+      useCaseGrid.querySelector('input').checked = true;
+      setTimeout(loadPending, 2000);
     } else {
       status.textContent = '错误: ' + data.message;
+      status.className = 'submit-feedback error';
     }
   } catch (err) {
-    status.textContent = '网络错误';
+    status.textContent = '网络错误，请重试';
+    status.className = 'submit-feedback error';
   }
 });
+
+const useCaseLabels = { checkin_structure: '日常结构化', weekly_review_draft: '周复盘草稿', evidence_relations: '证据关系', rule_explanation: '规则解释' };
+const statusLabels = { queued: '排队中', running: '运行中', succeeded: '已完成', failed: '失败', pending_user: '待处理', accepted: '已接受', accepted_modified: '已修改', rejected: '已拒绝', expired: '已过期', cancelled: '已取消' };
+const statusClass = (s) => ({ pending_user: 'caution', accepted: 'ready', accepted_modified: 'ready', rejected: 'blocked', failed: 'blocked', running: 'caution' })[s] || '';
 
 async function loadPending() {
   try {
@@ -78,21 +148,76 @@ async function loadPending() {
     const data = await res.json();
     const container = document.getElementById('pending-list');
     if (!data.tasks || data.tasks.length === 0) {
-      container.innerHTML = '<p class="empty">没有待处理的建议。</p>';
+      container.innerHTML = '<p style="color:#aebbb4;margin:0">没有待处理的建议。提交一个新请求开始。</p>';
       return;
     }
     container.innerHTML = data.tasks.map(t => `
-      <div class="task-card" style="padding:1rem;margin:0.5rem 0;border:1px solid var(--border);border-radius:4px">
-        <span class="status">${t.status}</span>
-        <strong>${t.use_case}</strong>
-        <small>${new Date(t.created_at).toLocaleString('zh-CN')}</small>
-        <div style="margin-top:0.5rem">
-          <a href="/advisory/${t.id}">查看详情 →</a>
+      <div class="pending-task" onclick="showTaskDetail('${t.id}')">
+        <div class="pt-header">
+          <span class="status ${statusClass(t.status)}">${statusLabels[t.status] || t.status}</span>
+          <small>${new Date(t.created_at).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small>
         </div>
+        <strong>${useCaseLabels[t.use_case] || t.use_case}</strong>
+        ${t.error_code ? '<p class="pt-error">错误: ' + t.error_code + '</p>' : ''}
       </div>
     `).join('');
   } catch (err) {
-    document.getElementById('pending-list').innerHTML = '<p class="empty">加载失败</p>';
+    document.getElementById('pending-list').innerHTML = '<p style="color:#aebbb4;margin:0">加载失败</p>';
+  }
+}
+
+async function showTaskDetail(taskId) {
+  try {
+    const res = await fetch('/api/advisory/' + taskId);
+    const data = await res.json();
+    const t = data.task;
+    const detail = document.getElementById('task-detail');
+    const content = document.getElementById('task-detail-content');
+    content.innerHTML = `
+      <span class="status ${statusClass(t.status)}" style="margin-bottom:12px">${statusLabels[t.status] || t.status}</span>
+      <h3 style="margin:12px 0 4px">${useCaseLabels[t.use_case] || t.use_case}</h3>
+      <small style="color:var(--muted)">${new Date(t.created_at).toLocaleString('zh-CN')}</small>
+      ${t.error_code ? '<p class="warning-box">错误: ' + t.error_code + '</p>' : ''}
+      ${t.output ? '<div class="detail-list" style="margin-top:16px">' + (t.output.suggestions || []).map((s, i) => `
+        <div>
+          <dt>建议 ${i + 1} · ${s.targetField} · <span class="status ${s.confidence === 'high' ? 'ready' : s.confidence === 'medium' ? 'caution' : 'blocked'}">${s.confidence}</span></dt>
+          <dd><strong>${s.proposedValue}</strong></dd>
+          <dd style="color:var(--muted);font-size:13px;margin-top:4px">理由: ${s.rationale}</dd>
+          ${s.uncertainties?.length ? '<dd style="color:var(--amber);font-size:12px;margin-top:4px">不确定: ' + s.uncertainties.join('；') + '</dd>' : ''}
+        </div>
+      `).join('') + '</div>' : ''}
+      ${t.status === 'pending_user' ? `
+        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="button primary small" onclick="decide('${t.id}','accepted')">接受全部</button>
+          <button class="button secondary small" onclick="decide('${t.id}','rejected')">拒绝</button>
+        </div>
+      ` : ''}
+    `;
+    detail.style.display = 'block';
+    detail.scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function decide(taskId, decision) {
+  const reason = decision === 'rejected' ? prompt('拒绝理由（必填）：') : (decision === 'accepted' ? '用户接受全部建议' : '');
+  if (!reason) return;
+  try {
+    const res = await fetch('/api/advisory/' + taskId + '/decision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '<%= csrfToken %>' },
+      body: JSON.stringify({ decision, reason }),
+    });
+    if (res.ok) {
+      document.getElementById('task-detail').style.display = 'none';
+      loadPending();
+    } else {
+      const data = await res.json();
+      alert('操作失败: ' + data.message);
+    }
+  } catch (err) {
+    alert('网络错误');
   }
 }
 
