@@ -77,10 +77,12 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 const form = document.getElementById('advisory-form');
-const status = document.getElementById('submit-status');
-const select = document.getElementById('useCaseSelect');
+const statusEl = document.getElementById('submit-status');
+const selectEl = document.getElementById('useCaseSelect');
 const currentCase = document.getElementById('currentCase');
+const textarea = document.querySelector('textarea[name="userInstruction"]');
 
 const caseLabels = {
   checkin_structure: '日常结构化 — 从项目上下文中提取候选行动',
@@ -89,146 +91,138 @@ const caseLabels = {
   rule_explanation: '规则解释 — 解释已触发规则的逻辑',
 };
 
-select.addEventListener('change', () => {
-  currentCase.innerHTML = '<strong>当前选择：</strong>' + caseLabels[select.value];
+selectEl.addEventListener('change', function() {
+  currentCase.innerHTML = '<strong>当前选择：</strong>' + (caseLabels[selectEl.value] || selectEl.value);
 });
 
-const textarea = document.querySelector('textarea[name="userInstruction"]');
-textarea.addEventListener('input', () => { document.getElementById('charCount').textContent = textarea.value.length; });
+textarea.addEventListener('input', function() {
+  document.getElementById('charCount').textContent = String(textarea.value.length);
+});
 
-form.addEventListener('submit', async (e) => {
+const csrfToken = '<%= csrfToken %>';
+
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
-  status.textContent = '提交中…';
-  status.className = 'submit-feedback';
+  statusEl.textContent = '提交中…';
+  statusEl.className = 'submit-feedback';
   try {
-    const recordIds = form.recordIds.value.split(',').map(s => s.trim()).filter(Boolean);
+    const recordIds = form.recordIds.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
     const res = await fetch('/api/advisory', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '<%= csrfToken %>' },
-      body: JSON.stringify({ useCase: form.useCase.value, recordIds, userInstruction: form.userInstruction.value || undefined, records: [] }),
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+      body: JSON.stringify({ useCase: form.useCase.value, recordIds: recordIds, userInstruction: form.userInstruction.value || undefined, records: [] }),
     });
     const data = await res.json();
     if (res.ok) {
-      status.innerHTML = '✓ 已提交 <code>' + data.taskId + '</code>';
-      status.className = 'submit-feedback success';
-      form.reset(); select.value = 'checkin_structure';
-      currentCase.innerHTML = '<strong>当前选择：</strong>' + caseLabels[select.value];
-      setTimeout(loadPending, 2000);
+      statusEl.innerHTML = '✓ 已提交 <code>' + data.taskId + '</code>';
+      statusEl.className = 'submit-feedback success';
+      loadPending();
     } else {
-      status.textContent = '错误: ' + data.message;
-      status.className = 'submit-feedback error';
+      statusEl.textContent = '错误: ' + data.message;
+      statusEl.className = 'submit-feedback error';
     }
   } catch (err) {
-    status.textContent = '网络错误，请重试';
-    status.className = 'submit-feedback error';
+    statusEl.textContent = '网络错误，请重试';
+    statusEl.className = 'submit-feedback error';
   }
 });
 
 const statusLabels = { queued: '排队中', running: '运行中', succeeded: '已完成', failed: '失败', pending_user: '待处理', accepted: '已接受', accepted_modified: '已修改', rejected: '已拒绝', expired: '已过期', cancelled: '已取消' };
-const statusClass = (s) => ({ pending_user: 'caution', accepted: 'ready', accepted_modified: 'ready', rejected: 'blocked', failed: 'blocked', running: 'caution' })[s] || '';
+
+function statusClass(s) {
+  return { pending_user: 'caution', accepted: 'ready', accepted_modified: 'ready', rejected: 'blocked', failed: 'blocked', running: 'caution' }[s] || '';
+}
 
 async function loadPending() {
+  var container = document.getElementById('pending-list');
   try {
-    const res = await fetch('/api/advisory/pending');
-    const data = await res.json();
-    const container = document.getElementById('pending-list');
-    if (!data.tasks || data.tasks.length === 0) {
+    var res = await fetch('/api/advisory/pending', { credentials: 'same-origin' });
+    if (!res.ok) { container.innerHTML = '<p style="color:#aebbb4;margin:0">需要登录后才能查看。</p>'; return; }
+    var data = await res.json();
+    if (!data.tasks || !data.tasks.length) {
       container.innerHTML = '<p style="color:#aebbb4;margin:0">没有待处理的建议。</p>';
       return;
     }
-    container.innerHTML = data.tasks.map(t => `
-      <div class="pending-task" onclick="showTaskDetail('${t.id}')">
-        <div class="pt-header">
-          <span class="status ${statusClass(t.status)}">${statusLabels[t.status] || t.status}</span>
-          <small>${new Date(t.created_at).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small>
-        </div>
-        <strong>${caseLabels[t.use_case] || t.use_case}</strong>
-        ${t.error_code ? '<p class="pt-error">错误: ' + t.error_code + '</p>' : ''}
-      </div>
-    `).join('');
+    container.innerHTML = data.tasks.map(function(t) {
+      var sc = statusClass(t.status);
+      var sl = statusLabels[t.status] || t.status;
+      var date = new Date(t.created_at).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return '<div class="pending-task" onclick="window._showTask(\'' + t.id + '\')"><div class="pt-header"><span class="status ' + sc + '">' + sl + '</span><small>' + date + '</small></div><strong>' + (caseLabels[t.use_case] || t.use_case) + '</strong>' + (t.error_code ? '<p class="pt-error">错误: ' + t.error_code + '</p>' : '') + '</div>';
+    }).join('');
   } catch (err) {
-    document.getElementById('pending-list').innerHTML = '<p style="color:#aebbb4;margin:0">加载失败</p>';
+    container.innerHTML = '<p style="color:#aebbb4;margin:0">加载失败</p>';
   }
 }
 
-async function showTaskDetail(taskId) {
+async function loadRecentRecords() {
+  var container = document.getElementById('recent-records');
   try {
-    const res = await fetch('/api/advisory/' + taskId);
-    const data = await res.json();
-    const t = data.task;
-    const detail = document.getElementById('task-detail');
-    const content = document.getElementById('task-detail-content');
-    content.innerHTML = `
-      <span class="status ${statusClass(t.status)}" style="margin-bottom:12px">${statusLabels[t.status] || t.status}</span>
-      <h3 style="margin:12px 0 4px">${caseLabels[t.use_case] || t.use_case}</h3>
-      <small style="color:var(--muted)">${new Date(t.created_at).toLocaleString('zh-CN')}</small>
-      ${t.error_code ? '<p class="warning-box">错误: ' + t.error_code + '</p>' : ''}
-      ${t.output && t.output.suggestions ? '<div class="detail-list" style="margin-top:16px">' + t.output.suggestions.map((s, i) => `
-        <div>
-          <dt>建议 ${i + 1} · ${s.targetField} · <span class="status ${s.confidence === 'high' ? 'ready' : s.confidence === 'medium' ? 'caution' : 'blocked'}">${s.confidence}</span></dt>
-          <dd><strong>${s.proposedValue}</strong></dd>
-          <dd style="color:var(--muted);font-size:13px;margin-top:4px">理由: ${s.rationale}</dd>
-          ${s.uncertainties?.length ? '<dd style="color:var(--amber);font-size:12px;margin-top:4px">不确定: ' + s.uncertainties.join('；') + '</dd>' : ''}
-        </div>
-      `).join('') + '</div>' : ''}
-      ${t.status === 'pending_user' ? `<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap"><button class="button primary small" onclick="decide('${t.id}','accepted')">接受全部</button><button class="button secondary small" onclick="decide('${t.id}','rejected')">拒绝</button></div>` : ''}
-    `;
+    var res = await fetch('/api/dashboard', { credentials: 'same-origin' });
+    if (!res.ok) { container.innerHTML = '<p class="empty">需要登录后查看。</p>'; return; }
+    var data = await res.json();
+    var html = '';
+    if (data.activeProjects && data.activeProjects.length) {
+      html += '<table class="guide-table" style="margin-top:0"><thead><tr><th>类型</th><th>标题</th><th>UUID</th></tr></thead><tbody>';
+      data.activeProjects.forEach(function(p) {
+        html += '<tr><td><span class="status ready">项目</span></td><td>' + p.title + '</td><td><code style="cursor:pointer;font-size:11px" onclick="window._copyId(\'' + p.id + '\')">' + p.id.slice(0,12) + '…</code></td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    if (data.latestCheckin) {
+      if (!html) html = '<table class="guide-table" style="margin-top:0"><thead><tr><th>类型</th><th>内容</th><th>UUID</th></tr></thead><tbody>';
+      var c = data.latestCheckin;
+      html += '<tr><td><span class="status caution">决策</span></td><td>' + (c.main_action || '(空)').slice(0, 60) + '</td><td><code style="cursor:pointer;font-size:11px" onclick="window._copyId(\'' + c.id + '\')">' + c.id.slice(0,12) + '…</code></td></tr>';
+    }
+    if (!html) {
+      container.innerHTML = '<div class="warning-box"><strong>暂无记录</strong> — 先去<a href="/checkins/new" style="color:var(--green)">今日决策</a>或<a href="/projects" style="color:var(--green)">项目</a>创建记录，再回来使用顾问。</div>';
+    } else {
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+  } catch (err) {
+    container.innerHTML = '<p class="empty">加载失败，请刷新重试</p>';
+  }
+}
+
+window._copyId = function(id) {
+  navigator.clipboard.writeText(id).then(function() {
+    form.recordIds.value = form.recordIds.value ? form.recordIds.value + ', ' + id : id;
+    form.recordIds.focus();
+  });
+};
+
+window._showTask = async function(taskId) {
+  try {
+    var res = await fetch('/api/advisory/' + taskId, { credentials: 'same-origin' });
+    var data = await res.json();
+    var t = data.task;
+    var detail = document.getElementById('task-detail');
+    var content = document.getElementById('task-detail-content');
+    content.innerHTML = '<span class="status ' + statusClass(t.status) + '" style="margin-bottom:12px">' + (statusLabels[t.status] || t.status) + '</span><h3 style="margin:12px 0 4px">' + (caseLabels[t.use_case] || t.use_case) + '</h3><small style="color:var(--muted)">' + new Date(t.created_at).toLocaleString('zh-CN') + '</small>' + (t.error_code ? '<p class="warning-box">错误: ' + t.error_code + '</p>' : '') + (t.output && t.output.suggestions ? '<div class="detail-list" style="margin-top:16px">' + t.output.suggestions.map(function(s, i) { return '<div><dt>建议 ' + (i+1) + ' · ' + s.targetField + ' · <span class="status ' + (s.confidence==='high'?'ready':s.confidence==='medium'?'caution':'blocked') + '">' + s.confidence + '</span></dt><dd><strong>' + s.proposedValue + '</strong></dd><dd style="color:var(--muted);font-size:13px;margin-top:4px">' + s.rationale + '</dd>' + (s.uncertainties && s.uncertainties.length ? '<dd style="color:var(--amber);font-size:12px;margin-top:4px">不确定: ' + s.uncertainties.join('；') + '</dd>' : '') + '</div>'; }).join('') + '</div>' : '') + (t.status==='pending_user' ? '<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap"><button class="button primary small" onclick="window._decide(\'' + t.id + '\',\'accepted\')">接受全部</button><button class="button secondary small" onclick="window._decide(\'' + t.id + '\',\'rejected\')">拒绝</button></div>' : '');
     detail.style.display = 'block';
     detail.scrollIntoView({ behavior: 'smooth' });
   } catch (err) { console.error(err); }
-}
+};
 
-async function decide(taskId, decision) {
-  const reason = decision === 'rejected' ? prompt('拒绝理由（必填）：') : '用户接受全部建议';
+window._decide = async function(taskId, decision) {
+  var reason = decision === 'rejected' ? prompt('拒绝理由（必填）：') : '用户接受全部建议';
   if (!reason) return;
   try {
-    const res = await fetch('/api/advisory/' + taskId + '/decision', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': '<%= csrfToken %>' },
-      body: JSON.stringify({ decision, reason }),
+    var res = await fetch('/api/advisory/' + taskId + '/decision', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+      body: JSON.stringify({ decision: decision, reason: reason }),
     });
     if (res.ok) { document.getElementById('task-detail').style.display = 'none'; loadPending(); }
-    else { const d = await res.json(); alert('失败: ' + d.message); }
+    else { var d = await res.json(); alert('失败: ' + d.message); }
   } catch (err) { alert('网络错误'); }
-}
-
-// Load recent records for the ID field
-async function loadRecentRecords() {
-  try {
-    const res = await fetch('/api/dashboard');
-    const data = await res.json();
-    const container = document.getElementById('recent-records');
-    let html = '<table class="guide-table" style="margin-top:0"><thead><tr><th>类型</th><th>标题/内容</th><th>复制 UUID</th></tr></thead><tbody>';
-
-    if (data.activeProjects?.length) {
-      data.activeProjects.forEach(p => {
-        html += '<tr><td><span class="status ready">项目</span></td><td>' + p.title + '</td><td><code style="cursor:pointer;font-size:11px" onclick="copyId(\'' + p.id + '\')">' + p.id.slice(0,12) + '…</code></td></tr>';
-      });
-    }
-    if (data.latestCheckin) {
-      const c = data.latestCheckin;
-      html += '<tr><td><span class="status caution">决策</span></td><td>' + (c.main_action || '(空)').slice(0, 50) + '</td><td><code style="cursor:pointer;font-size:11px" onclick="copyId(\'' + c.id + '\')">' + c.id.slice(0,12) + '…</code></td></tr>';
-    }
-    if (!data.activeProjects?.length && !data.latestCheckin) {
-      container.innerHTML = '<div class="warning-box"><strong>暂无记录</strong> — 先去<a href="/checkins/new" style="color:var(--green)">今日决策</a>或<a href="/projects" style="color:var(--green)">项目</a>创建一些记录，再回来使用顾问。</div>';
-      return;
-    }
-    html += '</tbody></table>';
-    container.innerHTML = html;
-  } catch (err) {
-    document.getElementById('recent-records').innerHTML = '<p class="empty">无法加载记录</p>';
-  }
-}
-
-window.copyId = function(id) {
-  navigator.clipboard.writeText(id).then(() => {
-    const input = form.recordIds;
-    input.value = input.value ? input.value + ', ' + id : id;
-    input.focus();
-  });
 };
 
 loadPending();
 loadRecentRecords();
+
+});
 </script>
 
 <%- include('partials/foot') %>
