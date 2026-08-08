@@ -39,7 +39,7 @@ CREATE INDEX idx_ai_tasks_created ON advisory.ai_tasks (created_at);
 -- but never by modifying output, request, or context_digest.
 
 -- Record this migration
-INSERT INTO governance.schema_migrations (version, name)
-VALUES ('006', 'llm_advisory_task_persistence');
+INSERT INTO governance.schema_migrations (version, checksum)
+VALUES ('006', '006_llm_advisory');
 
 COMMIT;
