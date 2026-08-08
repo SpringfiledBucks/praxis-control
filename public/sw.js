@@ -1,7 +1,8 @@
-const STATIC_CACHE = 'praxis-static-v1';
+const STATIC_CACHE = 'praxis-static-v2';
 const STATIC_ASSETS = [
   '/static/styles.css',
   '/static/app.js',
+  '/static/advisory.js',
   '/static/offline.html',
   '/static/icons/praxis-control.svg',
   '/static/widgets/praxis-summary-template.json',
