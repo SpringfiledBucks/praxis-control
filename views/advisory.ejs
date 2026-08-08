@@ -22,7 +22,7 @@
         <div class="section-content">
           <h2>场景</h2>
           <p>选择顾问要帮你做什么：</p>
-          <select id="useCaseSelect" name="useCase" style="margin-bottom:12px" <%= locals.llmAvailable ? '' : 'disabled' %> required>
+          <select id="useCaseSelect" name="useCase" style="margin-bottom:12px" required>
             <option value="checkin_structure">📋 日常结构化 — 从项目上下文提取候选行动、交付物和停止条件</option>
             <option value="weekly_review_draft">📊 周复盘草稿 — 根据本周记录生成进展摘要和下周建议</option>
             <option value="evidence_relations">🔗 证据关系 — 分析证据记录之间的支持、矛盾或补充关系</option>
@@ -41,7 +41,7 @@
           <h2>关联记录</h2>
           <p>顾问只能参考你显式指定的记录。从已有记录中点击 UUID 复制填入。</p>
           <label>记录 ID（逗号分隔）
-            <input type="text" name="recordIds" <%= locals.llmAvailable ? '' : 'disabled' %> required placeholder="点击下方表格中的 UUID 自动填入" />
+            <input type="text" name="recordIds" required placeholder="点击下方表格中的 UUID 自动填入" />
             <small>从下方表格复制 <code>id</code> 列的值，多个用英文逗号隔开</small>
           </label>
           <div id="recent-records" class="top-gap">
@@ -56,7 +56,7 @@
           <h2>补充说明（可选）</h2>
           <p>用自然语言告诉顾问你的关注点。</p>
           <label>补充指令
-            <textarea name="userInstruction" <%= locals.llmAvailable ? '' : 'disabled' %> maxlength="2000" rows="3" placeholder="例如：重点关注数据盘更换进度，忽略已闭环事项。帮我看看这几个证据之间有没有矛盾。"></textarea>
+            <textarea name="userInstruction" maxlength="2000" rows="3" placeholder="例如：重点关注数据盘更换进度，忽略已闭环事项。帮我看看这几个证据之间有没有矛盾。"></textarea>
             <small><span id="charCount">0</span> / 2000</small>
           </label>
         </div>
