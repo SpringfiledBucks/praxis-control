@@ -56,18 +56,8 @@ function buildSystemPrompt(useCase: string): string {
     ].join(' '),
   };
 
-  const example = {
-    checkin_structure: [
-      '输出示例：',
-      '{ "schemaVersion": 1, "summary": "项目"数据盘故障修复"当前瓶颈为现场人力不足，建议今日行动为完成B02POD9剩余3台故障盘更换。",',
-      '"suggestions": [{ "targetField": "mainAction", "proposedValue": "完成B02POD9剩余3台RH2288H V3服务器数据盘故障更换",',
-      '"rationale": "瓶颈字段和阶段目标均指向故障盘更换为当前最阻塞事项", "sourceRecordIds": ["uuid-of-project"],',
-      '"usesUserInstruction": false, "confidence": "high", "uncertainties": ["剩余3台是否实际可操作需现场确认"] }] }',
-    ].join(' '),
-  };
-
   const prompts: Record<string, string> = {
-    checkin_structure: [base, framework.checkin_structure, example.checkin_structure, safety].join('\n\n'),
+    checkin_structure: [base, framework.checkin_structure, safety].join('\n\n'),
     weekly_review_draft: [base, framework.weekly_review_draft, safety].join('\n\n'),
     evidence_relations: [base, framework.evidence_relations, safety].join('\n\n'),
     rule_explanation: [base, framework.rule_explanation, safety].join('\n\n'),
