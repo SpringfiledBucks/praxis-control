@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (res.ok) {
         statusEl.innerHTML = '✓ 已提交 <code>' + escapeHtml(data.taskId) + '</code>';
         statusEl.className = 'submit-feedback success';
-        loadPending();
+        pollTick(); // immediately refresh and switch to fast polling
       } else {
         statusEl.textContent = '错误: ' + (data.message || res.status);
         statusEl.className = 'submit-feedback error';
@@ -123,20 +123,25 @@ document.addEventListener('DOMContentLoaded', function () {
         headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
         body: JSON.stringify({ decision: decision, reason: reason }),
       });
-      if (res.ok) { document.getElementById('task-detail').style.display = 'none'; loadPending(); }
+      if (res.ok) { document.getElementById('task-detail').style.display = 'none'; pollTick(); }
       else { const d = await res.json(); alert('失败: ' + (d.message || res.status)); }
     } catch (err) { alert('网络错误'); }
   }
 
+  // Returns poll-state info for the managed poller:
+  //   'transient' — at least one queued/running task (poll fast)
+  //   'idle'      — no tasks at all (lazy heartbeat)
+  //   'final'     — tasks exist but all reached final states (stop)
+  //   null        — request failed (keep current cadence)
   async function loadPending() {
     const container = document.getElementById('pending-list');
     try {
       const res = await fetch('/api/advisory/pending', { credentials: 'same-origin' });
-      if (!res.ok) { container.innerHTML = '<p style="color:#aebbb4;margin:0">需要登录后才能查看。</p>'; return; }
+      if (!res.ok) { container.innerHTML = '<p style="color:#aebbb4;margin:0">需要登录后才能查看。</p>'; return 'final'; }
       const data = await res.json();
       if (!data.tasks || !data.tasks.length) {
         container.innerHTML = '<p style="color:#aebbb4;margin:0">没有待处理的建议。</p>';
-        return;
+        return 'idle';
       }
       container.innerHTML = data.tasks.map(function (t) {
         const sc = statusClass(t.status);
@@ -146,8 +151,10 @@ document.addEventListener('DOMContentLoaded', function () {
           + (t.error_code ? '<p class="pt-error">错误: ' + escapeHtml(t.error_code) + '</p>' : '')
           + '</div>';
       }).join('');
+      return data.tasks.some(function (t) { return isTransient(t.status); }) ? 'transient' : 'final';
     } catch (err) {
       container.innerHTML = '<p style="color:#aebbb4;margin:0">加载失败</p>';
+      return null;
     }
   }
 
@@ -181,6 +188,67 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // ── Managed auto-refresh poller ──
+  // Replaces the old unconditional `setInterval(loadPending, 5000)`:
+  //  • 5s while tasks are still in flight (queued / running)
+  //  • 30s lazy heartbeat when there are no tasks at all
+  //  • stops entirely once every task has reached a final state
+  //  • pauses while the page is hidden, resumes with an immediate
+  //    refresh when it becomes visible again
+  const POLL_ACTIVE_MS = 5000;
+  const POLL_IDLE_MS = 30000;
+
+  let pollTimer = null;     // handle of the current setInterval (null = stopped)
+  let pollInterval = 0;     // ms of the current interval (0 = stopped)
+  let pollActive = false;   // whether the poll loop is currently running
+  let pollInFlight = false; // guard against overlapping requests
+
+  function isTransient(status) {
+    return status === 'queued' || status === 'running';
+  }
+
+  function startPolling(ms) {
+    if (pollTimer !== null) {
+      if (pollInterval === ms) return; // already on the right cadence
+      clearInterval(pollTimer);
+    }
+    pollInterval = ms;
+    pollActive = true;
+    pollTimer = setInterval(pollTick, ms);
+  }
+
+  function stopPolling() {
+    if (pollTimer !== null) clearInterval(pollTimer);
+    pollTimer = null;
+    pollInterval = 0;
+    pollActive = false;
+  }
+
+  async function pollTick() {
+    if (pollInFlight) return;
+    if (document.hidden) { stopPolling(); return; }
+    pollInFlight = true;
+    let state;
+    try {
+      state = await loadPending(); // also re-renders the list
+    } finally {
+      pollInFlight = false;
+    }
+    if (document.hidden) { stopPolling(); return; } // page hidden mid-request
+    if (state === 'transient') startPolling(POLL_ACTIVE_MS);
+    else if (state === 'idle') startPolling(POLL_IDLE_MS);
+    else if (state === 'final') stopPolling();
+    // state === null (fetch failed): keep current cadence, retry next tick
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      stopPolling();
+    } else {
+      pollTick(); // immediate refresh, then resume at the right cadence
+    }
+  });
+
   // ── Event delegation (inline onclick handlers are blocked by CSP) ──
   document.getElementById('close-task-detail').addEventListener('click', function () {
     document.getElementById('task-detail').style.display = 'none';
@@ -201,8 +269,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (button) decide(button.dataset.taskId, button.dataset.decide);
   });
 
-  loadPending();
   loadRecentRecords();
-  // Auto-refresh pending list every 5s
-  setInterval(loadPending, 5000);
+  pollTick(); // initial load + managed auto-refresh
 });
