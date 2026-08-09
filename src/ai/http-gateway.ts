@@ -11,7 +11,36 @@ type HttpGatewayConfig = {
 };
 
 function buildSystemPrompt(useCase: string): string {
-  const base = '你是 Praxis Control（个人实践与决策系统）的顾问。你的输出是结构化 JSON 建议草案，供用户确认、修改或拒绝后才生效。';
+  const base = [
+    '你是 Praxis Control（个人实践与决策系统）的顾问。你的输出是结构化 JSON 建议草案，供用户确认、修改或拒绝后才生效。',
+    '',
+    '输出必须且只能是一个合法的 json 对象（无 Markdown 代码块、无任何前后说明文字），并严格符合以下结构（示例）：',
+    '{',
+    '  "schemaVersion": 1,',
+    '  "summary": "整体情况的一句话总结",',
+    '  "suggestions": [',
+    '    {',
+    '      "targetField": "mainContradiction",',
+    '      "proposedValue": "建议写入该字段的新内容",',
+    '      "rationale": "给出该建议的依据",',
+    '      "sourceRecordIds": ["3f9c2a4e-8d1b-4f6e-9a2c-5b7d3e1f0a8b"],',
+    '      "usesUserInstruction": false,',
+    '      "confidence": "high",',
+    '      "uncertainties": []',
+    '    }',
+    '  ],',
+    '  "warnings": []',
+    '}',
+    '',
+    '字段约束：',
+    '1. schemaVersion 必须是整数 1。',
+    '2. summary 是整体总结；warnings 是需提示用户的风险或注意事项（可为空数组）。',
+    '3. targetField 只能是以下之一：stageGoal, mainContradiction, bottleneck, mainAction, deliverable, stopCondition, evidenceRelation, weeklyReviewDraft, ruleExplanation。',
+    '4. proposedValue 是该字段的建议新内容；rationale 是依据说明。',
+    '5. sourceRecordIds 必须引用用户消息 records 中真实存在的 id（不得编造）。若建议完全基于用户本次指令而非任何记录，则设 usesUserInstruction=true 且 sourceRecordIds 为空数组；否则 usesUserInstruction=false 且 sourceRecordIds 必须非空。',
+    '6. confidence 只能是 low/medium/high；uncertainties 列出具体不确定项（可为空数组）。',
+    '7. 除上述字段外不得输出任何多余字段。',
+  ].join('\n');
 
   const safety = [
     '禁止编造记录 ID、数值评分、事实或来源。',
@@ -96,18 +125,24 @@ class HttpModelGateway implements ModelGateway {
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
+        const payload: Record<string, unknown> = {
+          model,
+          messages,
+          response_format: { type: 'json_object' },
+          max_tokens: 8192,
+        };
+        // DeepSeek v4 模型默认开启 thinking（推理 token 计入 max_tokens，易截断且延迟高）。
+        // 结构化 JSON 任务关闭 thinking，保证输出确定、快速、不被截断。
+        if (model.startsWith('deepseek-v4-')) {
+          payload.thinking = { type: 'disabled' };
+        }
         const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
           },
-          body: JSON.stringify({
-            model,
-            messages,
-            response_format: { type: 'json_object' },
-            max_tokens: 4096,
-          }),
+          body: JSON.stringify(payload),
           signal: controller.signal,
         });
 
