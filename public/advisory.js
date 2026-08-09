@@ -203,4 +203,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   loadPending();
   loadRecentRecords();
+  // Auto-refresh pending list every 5s
+  setInterval(loadPending, 5000);
 });
