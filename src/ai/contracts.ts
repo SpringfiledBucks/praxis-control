@@ -45,11 +45,11 @@ export const advisorySuggestionSchema = z.object({
 });
 
 export const advisoryResponseSchema = z.object({
-  schemaVersion: z.literal(1),
-  summary: z.string().trim().min(1).max(1000),
-  suggestions: z.array(advisorySuggestionSchema).max(20),
-  warnings: z.array(z.string().trim().min(1).max(500)).max(10),
-}).strict();
+  schemaVersion: z.number().int().min(1),
+  summary: z.string().trim().max(1000).default(''),
+  suggestions: z.array(advisorySuggestionSchema).max(20).default([]),
+  warnings: z.array(z.string().trim().max(500)).max(10).default([]),
+});
 
 export type AdvisoryRequest = z.infer<typeof advisoryRequestSchema>;
 export type AdvisoryResponse = z.infer<typeof advisoryResponseSchema>;
