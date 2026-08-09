@@ -100,12 +100,20 @@ document.addEventListener('DOMContentLoaded', function () {
         + '<h3 style="margin:12px 0 4px">' + caseLabel(t.use_case) + '</h3>'
         + '<small style="color:var(--muted)">' + new Date(t.created_at).toLocaleString('zh-CN') + '</small>';
       if (t.error_code) html += '<p class="warning-box">错误: ' + escapeHtml(t.error_code) + '</p>';
-      if (t.output && t.output.suggestions) {
-        html += '<div class="detail-list" style="margin-top:16px">' + t.output.suggestions.map(function (s, i) {
-          return '<div><dt>建议 ' + (i + 1) + ' · ' + escapeHtml(s.targetField) + ' · <span class="status ' + (s.confidence === 'high' ? 'ready' : s.confidence === 'medium' ? 'caution' : 'blocked') + '">' + ({ high: '高', medium: '中', low: '低' }[s.confidence] || escapeHtml(s.confidence)) + '</span></dt><dd><strong>' + escapeHtml(s.proposedValue) + '</strong></dd><dd style="color:var(--muted);font-size:13px;margin-top:4px">' + escapeHtml(s.rationale) + '</dd>'
-            + (s.uncertainties && s.uncertainties.length ? '<dd style="color:var(--amber);font-size:12px;margin-top:4px">不确定: ' + s.uncertainties.map(escapeHtml).join('；') + '</dd>' : '')
-            + '</div>';
-        }).join('') + '</div>';
+      if (t.output) {
+        if (t.output.summary) html += '<p style="margin:14px 0 8px;line-height:1.6"><strong>摘要：</strong>' + escapeHtml(t.output.summary) + '</p>';
+        if (t.output.warnings && t.output.warnings.length) {
+          html += '<div class="warning-box" style="margin-bottom:12px">' + t.output.warnings.map(function(w){return '⚠ ' + escapeHtml(w);}).join('<br>') + '</div>';
+        }
+        if (t.output.suggestions && t.output.suggestions.length) {
+          html += '<div class="detail-list" style="margin-top:16px">' + t.output.suggestions.map(function (s, i) {
+            return '<div><dt>建议 ' + (i + 1) + ' · ' + escapeHtml(s.targetField) + ' · <span class="status ' + (s.confidence === 'high' ? 'ready' : s.confidence === 'medium' ? 'caution' : 'blocked') + '">' + ({ high: '高', medium: '中', low: '低' }[s.confidence] || escapeHtml(s.confidence)) + '</span></dt><dd><strong>' + escapeHtml(s.proposedValue) + '</strong></dd><dd style="color:var(--muted);font-size:13px;margin-top:4px">' + escapeHtml(s.rationale) + '</dd>'
+              + (s.uncertainties && s.uncertainties.length ? '<dd style="color:var(--amber);font-size:12px;margin-top:4px">不确定: ' + s.uncertainties.map(escapeHtml).join('；') + '</dd>' : '')
+              + '</div>';
+          }).join('') + '</div>';
+        } else if (t.output.suggestions) {
+          html += '<p style="color:var(--muted);margin:14px 0">无具体建议。</p>';
+        }
       }
       if (t.status === 'pending_user') {
         html += '<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">'
