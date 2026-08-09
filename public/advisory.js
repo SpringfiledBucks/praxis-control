@@ -52,10 +52,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
+    const recordIds = form.recordIds.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!recordIds.length) {
+      statusEl.textContent = '请至少填入一条记录 ID';
+      statusEl.className = 'submit-feedback error';
+      return;
+    }
     statusEl.textContent = '提交中…';
     statusEl.className = 'submit-feedback';
     try {
-      const recordIds = form.recordIds.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
       const res = await fetch('/api/advisory', {
         method: 'POST',
         credentials: 'same-origin',

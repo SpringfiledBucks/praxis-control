@@ -225,9 +225,9 @@ pre { max-height: 420px; overflow: auto; padding: 15px; border-radius: 10px; col
 /* --- LLM Advisory --- */
 .advisory-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
 .advisory-main { min-width: 0; }
-.advisory-sidebar { position: sticky; top: 92px; max-height: calc(100vh - 110px); overflow-y: auto; }
+.advisory-sidebar { position: sticky; top: 92px; }
 .advisory-sidebar .sticky-card { position: static; }
-#task-detail { margin-top: 20px; }
+#task-detail { position: sticky; top: 92px; z-index: 5; margin-top: 20px; background: var(--panel); }
 
 .use-case-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
 .use-case-card { display: flex; flex-direction: column; gap: 6px; padding: 18px; border: 2px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .2s, background .2s; }
