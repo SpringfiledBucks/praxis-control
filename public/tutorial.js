@@ -80,13 +80,11 @@
     overlay.classList.remove('hidden');
     currentStep = 0;
     render();
-    try { localStorage.setItem('praxis-tutorial-open', '1'); } catch (_) {}
   }
 
   function close() {
     panel.classList.add('hidden');
     overlay.classList.add('hidden');
-    try { localStorage.removeItem('praxis-tutorial-open'); } catch (_) {}
   }
 
   function next() {
@@ -98,19 +96,16 @@
     if (currentStep > 0) { currentStep--; render(); }
   }
 
-  document.getElementById('tutorial-trigger').addEventListener('click', open);
-  document.getElementById('tutorial-close').addEventListener('click', close);
-  overlay.addEventListener('click', close);
+  document.getElementById('tutorial-trigger').addEventListener('click', function(e){ e.preventDefault(); open(); });
+  document.getElementById('tutorial-close').addEventListener('click', function(e){ e.preventDefault(); close(); });
+  overlay.addEventListener('click', function(e){ e.preventDefault(); close(); });
   nextBtn.addEventListener('click', next);
   prevBtn.addEventListener('click', prev);
 
-  // Restore open state across page navigations
-  if (localStorage.getItem('praxis-tutorial-open') === '1') open();
-
   document.addEventListener('keydown', function (e) {
     if (panel.classList.contains('hidden')) return;
-    if (e.key === 'Escape') close();
-    if (e.key === 'ArrowRight') next();
-    if (e.key === 'ArrowLeft') prev();
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
   });
 })();
