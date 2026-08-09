@@ -11,7 +11,7 @@ type HttpGatewayConfig = {
 };
 
 function buildSystemPrompt(useCase: string): string {
-  const base = '你是 Praxis Control（个人实践与决策系统）的顾问。你的输出是结构化建议草案，供用户确认、修改或拒绝后才生效。';
+  const base = '你是 Praxis Control（个人实践与决策系统）的顾问。你的输出是结构化 JSON 建议草案，供用户确认、修改或拒绝后才生效。';
 
   const safety = [
     '禁止编造记录 ID、数值评分、事实或来源。',
