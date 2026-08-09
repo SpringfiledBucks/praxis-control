@@ -4,5 +4,7 @@
     <span class="footer-actions"><span>人工决策保留</span><% if (accessMode === 'password' && authenticated) { %><form method="post" action="/logout" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="text-button">退出登录</button></form><% } %><% if (shutdownToken) { %><button type="button" class="text-button" id="shutdown-button" data-token="<%= shutdownToken %>">安全关闭</button><% } %></span>
   </footer>
   <script src="/static/app.js" defer></script>
+  <script src="/static/tutorial.js" defer></script>
+  <%- include('tutorial') %>
 </body>
 </html>
